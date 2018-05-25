@@ -252,8 +252,8 @@ wss.on('connection', function connection(ws) {
                 break;
 
             //Song wurde vom Nutzer weitergeschaltet
-            case 'change-song':
-                console.log("change-song " + value);
+            case 'change-item':
+                console.log("change-item " + value);
 
                 //wenn der naechste Song kommen soll
                 if (value) {
