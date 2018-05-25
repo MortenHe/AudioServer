@@ -19,14 +19,14 @@ var shuffle = require('shuffle-array');
 //Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
-//Je nach Ausfuerung auf pi oder in virtualbox gibt es unterschiedliche Pfade, Mode wird ueber command line uebergeben: node server.js vb
-const mode = process.argv[2] ? process.argv[2] : "pi";
-
 //Wert fuer Pfad aus config.json auslesen
 const configObj = fs.readJsonSync('./config.json');
 
-//Verzeichnis in dem die playlist.txt hinterlegt wird
-const progDir = configObj["path"][mode]["progDir"];
+//Verzeichnis, in dem die playlist.txt hinterlegt wird
+const progDir = "/home/pi/mh_prog";
+
+//Verzeichnis, in dem die Audiodateien liegen
+const audioDir = "/media/audio";
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 50;
@@ -172,18 +172,18 @@ wss.on('connection', function connection(ws) {
                 execSync("shutdown -h now");
                 break;
 
-            //neue Playlist laden (ueber Browser-Aufruf)
-            case "set-playlist":
-                console.log("set playlist " + JSON.stringify(value));
+            //neue Playlist laden (ueber Browser-Aufruf) oder per RFID
+            case "set-playlist": case "set-rfid-playlist":
+                console.log(type + JSON.stringify(value));
 
                 //Audio-Verzeichnis merken
-                currentPlaylist = value.dir;
+                currentPlaylist = audioDir + "/" + value.mode + "/" + value.path;
 
                 //Merken ob Random erlaubt ist
                 currentAllowRandom = value.allowRandom;
 
                 //aktives Item setzen
-                currentActiveItem = value.activeItem;
+                currentActiveItem = value.path;
 
                 //neue Playlist und allowRandom in Session-JSON-File schreiben
                 writeSessionJson();
@@ -203,40 +203,6 @@ wss.on('connection', function connection(ws) {
                     {
                         type: "active-item",
                         value: currentActiveItem
-                    },
-                    {
-                        type: "set-files",
-                        value: currentFiles
-                    },
-                    {
-                        type: "allow-random",
-                        value: currentAllowRandom
-                    });
-                break;
-
-            //neue Setlist laden (per RFID-Karte)
-            case "set-rfid-playlist":
-
-                //Audio-Verzeichnis merken
-                currentPlaylist = "/media/audio/" + configObj["cards"][value]["path"];
-
-                //allowRandom merken
-                currentAllowRandom = configObj["cards"][value]["allowRandom"];
-
-                //neue Playlist und allowRandom in Session-JSON-File schreiben
-                writeSessionJson();
-
-                //Setlist erstellen und starten
-                setPlaylist(false);
-
-                //Es ist nicht mehr pausiert
-                currentPaused = false;
-
-                //Nachricht an clients, dass nun nicht mehr pausiert ist
-                messageObjArr.push(
-                    {
-                        type: "toggle-paused",
-                        value: currentPaused
                     },
                     {
                         type: "set-files",
