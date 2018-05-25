@@ -19,9 +19,6 @@ var shuffle = require('shuffle-array');
 //Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
-//Wert fuer Pfad aus config.json auslesen
-const configObj = fs.readJsonSync('./config.json');
-
 //Verzeichnis, in dem die playlist.txt hinterlegt wird
 const progDir = "/home/pi/mh_prog";
 
