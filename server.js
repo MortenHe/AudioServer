@@ -9,9 +9,6 @@ const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
 //Zeit Formattierung laden: [5, 13, 22] => 05:13:22
 const timelite = require('timelite');
 
-//lodash laden (padstart)
-var _ = require('lodash');
-
 //Filesystem und Path Abfragen fuer Playlist
 const path = require('path');
 const fs = require('fs-extra');
@@ -33,7 +30,7 @@ const progDir = configObj["path"][mode]["progDir"];
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 50;
-currentPosition = 0;
+currentPosition = -1;
 currentFiles = [];
 currentPaused = false;
 currentRandom = false;
