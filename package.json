@@ -5,7 +5,7 @@
   "dependencies": {
     "fs-extra": "^6.0.0",
     "lodash": "^4.17.10",
-    "mplayer-wrapper": "^0.1.5",
+    "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
     "timelite": "0.0.10",
     "ws": "^5.2.0"
