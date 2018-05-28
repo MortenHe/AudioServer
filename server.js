@@ -269,6 +269,16 @@ wss.on('connection', function connection(ws) {
             //Sprung zu einem bestimmten Titel in Playlist
             case "jump-to":
 
+                //Wenn Playlist schon fertig ist
+                if (currentPosition === -1) {
+
+                    //wieder von vorne beginnen
+                    currentPosition = 0;
+
+                    //Playlist-Datei laden und starten
+                    player.exec("loadlist " + progDir + "/playlist.txt");
+                }
+
                 //Wie viele Schritte in welche Richtung springen?
                 let jumpTo = value - currentPosition;
                 console.log("jump-to " + jumpTo);
