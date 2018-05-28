@@ -60,7 +60,7 @@ player.on('filename', (filename) => {
 
 //Wenn Laenge des Tracks bei Track change geliefert wird
 player.on('length', function (val) {
-    console.log("Laenge ist " + val);
+    console.log("length is " + val);
 });
 
 //Wenn sich ein Titel aendert (durch Nutzer oder durch den Player)
@@ -77,21 +77,17 @@ player.on('track-change', () => {
 player.on('playlist-finish', () => {
     console.log("playlist finished");
 
-    //Aktives Item zuruecksetzen
-    currentActiveItem = "";
+    //Position zuruecksetzen
+    currentPosition = -1;
 
-    //Clients informieren, dass Playlist fertig ist (position -1, activeItem "")
-    let messageObjArr = [{
+    //Clients informieren, dass Playlist fertig ist (position -1)
+    sendClientInfo([{
         type: "set-position",
-        value: -1
-    },
-    {
-        type: "active-item",
-        value: currentActiveItem
-    }];
+        value: currentPosition
+    }]);
 
-    //Infos an Clients schicken
-    sendClientInfo(messageObjArr);
+    //Info in JSON schreiben, dass Playlist vorbei ist
+    writeSessionJson();
 });
 
 //Infos aus letzter Session auslesen
@@ -345,19 +341,33 @@ wss.on('connection', function connection(ws) {
                 break;
 
             //Pause-Status toggeln
-            case 'toggle-paused':
+            case 'toggle-paused-restart':
 
-                //Pausenstatus toggeln
-                currentPaused = !currentPaused;
+                //Wenn wir gerade in der Playlist sind
+                if (currentPosition !== -1) {
 
-                //Pause toggeln
-                player.playPause();
+                    //Pausenstatus toggeln
+                    currentPaused = !currentPaused;
 
-                //Nachricht an clients ueber Paused-Status
-                messageObjArr.push({
-                    type: "toggle-paused",
-                    value: currentPaused
-                });
+                    //Pause toggeln
+                    player.playPause();
+
+                    //Nachricht an clients ueber Paused-Status
+                    messageObjArr.push({
+                        type: "toggle-paused",
+                        value: currentPaused
+                    });
+                }
+
+                //Playlist ist schon vorbei
+                else {
+
+                    //wieder von vorne beginnen
+                    currentPosition = 0;
+
+                    //Playlist-Datei laden und starten
+                    player.exec("loadlist " + progDir + "/playlist.txt");
+                }
                 break;
 
             //Random toggle
