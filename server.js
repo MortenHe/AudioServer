@@ -39,6 +39,23 @@ let initialVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
 console.log(initialVolumeCommand)
 execSync(initialVolumeCommand);
 
+//Wenn Playlist fertig ist
+player.on('playlist-finish', () => {
+    console.log("playlist finished");
+
+    //Position zuruecksetzen
+    currentPosition = -1;
+
+    //Info in JSON schreiben, dass Playlist vorbei ist
+    writeSessionJson();
+
+    //Clients informieren, dass Playlist fertig ist (position -1)
+    sendClientInfo([{
+        type: "set-position",
+        value: currentPosition
+    }]);
+});
+
 //Wenn bei Track change der Filename geliefert wird
 player.on('filename', (filename) => {
 
@@ -48,19 +65,11 @@ player.on('filename', (filename) => {
     //neue Position in Session-JSON-File schreiben
     writeSessionJson();
 
-    //Position an Clients senden
-    let messageObjArr = [{
+    //Position-Infos an Clients schicken
+    sendClientInfo([{
         type: "set-position",
         value: currentPosition
-    }];
-
-    //Position-Infos an Clients schicken
-    sendClientInfo(messageObjArr);
-});
-
-//Wenn Laenge des Tracks bei Track change geliefert wird
-player.on('length', function (val) {
-    console.log("length is " + val);
+    }]);
 });
 
 //Wenn sich ein Titel aendert (durch Nutzer oder durch den Player)
@@ -68,30 +77,11 @@ player.on('track-change', () => {
 
     //Neuen Dateinamen liefern
     player.getProps(['filename']);
-
-    //Laenge des Titels liefern
-    player.getProps(['length']);
 });
 
-//Wenn Playlist fertig ist
-player.on('playlist-finish', () => {
-    console.log("playlist finished");
-
-    //Position zuruecksetzen
-    currentPosition = -1;
-
-    //Clients informieren, dass Playlist fertig ist (position -1)
-    sendClientInfo([{
-        type: "set-position",
-        value: currentPosition
-    }]);
-
-    //Info in JSON schreiben, dass Playlist vorbei ist
-    writeSessionJson();
-});
-
-//Infos aus letzter Session auslesen
-try {
+//Infos aus letzter Session auslesen, falls die Datei existiert
+if (fs.existsSync('./lastSession.json')) {
+    console.log("load playlist from last session " + currentPlaylist);
 
     //JSON-Objekt aus Datei holen
     const lastSessionObj = fs.readJsonSync('./lastSession.json');
@@ -107,18 +97,6 @@ try {
 
     //letzte Position in Playlist laden
     currentPosition = lastSessionObj.position;
-}
-
-//wenn lastSession.json noch nicht existiert
-catch (e) {
-
-    //keine Playlist laden
-    currentPlaylist = "";
-}
-
-//Wenn eine Playlist aus der vorherigen Session geladen wurde
-if (currentPlaylist) {
-    console.log("Load playlist from last session " + currentPlaylist);
 
     //diese Playlist zu Beginn spielen
     setPlaylist(true);
@@ -147,23 +125,6 @@ wss.on('connection', function connection(ws) {
 
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
-
-            //System herunterfahren
-            case "shutdown":
-                console.log("shutdown");
-
-                //Shutdown-Info an Clients senden
-                messageObjArr.push({
-                    type: "shutdown",
-                    value: ""
-                });
-
-                //Shutdown-Info an Clients schicken
-                sendClientInfo(messageObjArr);
-
-                //Pi herunterfahren
-                execSync("shutdown -h now");
-                break;
 
             //neue Playlist laden (ueber Browser-Aufruf) oder per RFID
             case "set-playlist": case "set-rfid-playlist":
@@ -223,12 +184,12 @@ wss.on('connection', function connection(ws) {
 
                     //wir sind beim letzten Titel
                     else {
+                        console.log("kein next beim letzten Track");
 
                         //Wenn Titel pausiert war, wieder unpausen
                         if (currentPaused) {
                             player.playPause();
                         }
-                        console.log("kein next beim letzten Track");
                     }
                 }
 
@@ -244,10 +205,10 @@ wss.on('connection', function connection(ws) {
 
                     //wir sind beim 1. Titel
                     else {
+                        console.log("1. Titel von vorne");
 
                         //Playlist nochmal von vorne starten
                         player.seekPercent(0);
-                        console.log("1. Titel von vorne");
 
                         //Wenn Titel pausiert war, wieder unpausen
                         if (currentPaused) {
@@ -307,47 +268,14 @@ wss.on('connection', function connection(ws) {
                 });
                 break;
 
-            //Lautstaerke aendern
-            case 'change-volume':
+            //Innerhalb des Titels spulen
+            case "seek":
 
-                //Wenn es lauter werden soll, max. 100 setzen
-                if (value) {
-                    currentVolume = Math.min(100, currentVolume + 10);
-                }
+                //+/- 10 Sek
+                let seekTo = value ? 10 : -10;
 
-                //es soll leiser werden, min. 0 setzen
-                else {
-                    currentVolume = Math.max(0, currentVolume - 10);
-                }
-
-                //Lautstaerke setzen
-                let changeVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
-                console.log(changeVolumeCommand)
-                execSync(changeVolumeCommand);
-
-                //Nachricht mit Volume an clients schicken 
-                messageObjArr.push({
-                    type: type,
-                    value: currentVolume
-                });
-                break;
-
-            //Lautstaerke setzen
-            case 'set-volume':
-
-                //neue Lautstaerke merken 
-                currentVolume = value;
-
-                //Lautstaerke setzen
-                let setVolumeCommand = "sudo amixer sset PCM " + value + "% -M";
-                console.log(setVolumeCommand)
-                execSync(setVolumeCommand);
-
-                //Nachricht mit Volume an clients schicken 
-                messageObjArr.push({
-                    type: type,
-                    value: currentVolume
-                });
+                //seek in item
+                player.seek(seekTo);
                 break;
 
             //Pause-Status toggeln
@@ -411,14 +339,43 @@ wss.on('connection', function connection(ws) {
                     });
                 break;
 
-            //Innerhalb des Titels spulen
-            case "seek":
+            //Lautstaerke aendern
+            case 'change-volume':
 
-                //+/- 10 Sek
-                let seekTo = value ? 10 : -10;
+                //Wenn es lauter werden soll, max. 100 setzen
+                if (value) {
+                    currentVolume = Math.min(100, currentVolume + 10);
+                }
 
-                //seek in item
-                player.seek(seekTo);
+                //es soll leiser werden, min. 0 setzen
+                else {
+                    currentVolume = Math.max(0, currentVolume - 10);
+                }
+
+                //Lautstaerke setzen
+                let changeVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
+                console.log(changeVolumeCommand)
+                execSync(changeVolumeCommand);
+
+                //Nachricht mit Volume an clients schicken 
+                messageObjArr.push({
+                    type: type,
+                    value: currentVolume
+                });
+                break;
+
+            //System herunterfahren
+            case "shutdown":
+                console.log("shutdown");
+
+                //Shutdown-Info an Clients schicken
+                sendClientInfo([{
+                    type: "shutdown",
+                    value: ""
+                }]);
+
+                //Pi herunterfahren
+                execSync("shutdown -h now");
                 break;
         }
 
@@ -428,7 +385,7 @@ wss.on('connection', function connection(ws) {
 
     //WS einmalig bei der Verbindung ueber div. Wert informieren
     let WSConnectObjectArr = [{
-        type: "set-volume",
+        type: "change-volume",
         value: currentVolume
     }, {
         type: "set-position",
@@ -460,7 +417,6 @@ wss.on('connection', function connection(ws) {
 
 //Timer-Funktion benachrichtigt regelmaessig die WS ueber aktuelle Position des Tracks
 function startTimer() {
-    console.log("startTimer");
 
     //Wenn time_pos property geliefert wirde
     player.on('time_pos', (totalSecondsFloat) => {
@@ -481,14 +437,11 @@ function startTimer() {
         //[2,44,1] => 02:44:01
         let outputString = timelite.time.str(output);
 
-        //Time-MessageObj erstellen
-        let messageObjArr = [{
+        //Clients ueber aktuelle Zeit informieren
+        sendClientInfo([{
             type: "time",
             value: outputString
-        }];
-
-        //Clients ueber aktuelle Zeit informieren
-        sendClientInfo(messageObjArr);
+        }]);
     });
 
     //Jede Sekunde die aktuelle Zeit innerhalb des Tracks liefern
@@ -548,7 +501,7 @@ function setPlaylist(reloadSession) {
 //Infos der Session in File schreiben
 function writeSessionJson() {
 
-    //Position in Playlist zusammen mit anderen Merkmalen merken fuer den Neustart
+    //Playlist zusammen mit anderen Merkmalen merken fuer den Neustart
     fs.writeJsonSync('./lastSession.json',
         {
             path: currentPlaylist,
