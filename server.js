@@ -33,6 +33,7 @@ currentPaused = false;
 currentRandom = false;
 currentAllowRandom = false;
 currentActiveItem = "";
+currentPlaylist = "";
 
 //Lautstaerke zu Beginn setzen
 let initialVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
@@ -81,13 +82,13 @@ player.on('track-change', () => {
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
 if (fs.existsSync('./lastSession.json')) {
-    console.log("load playlist from last session " + currentPlaylist);
 
     //JSON-Objekt aus Datei holen
     const lastSessionObj = fs.readJsonSync('./lastSession.json');
 
     //Playlist-Pfad laden
     currentPlaylist = lastSessionObj.path;
+    console.log("load playlist from last session " + currentPlaylist);
 
     //Letztes aktives Item laden
     currentActiveItem = lastSessionObj.activeItem;
