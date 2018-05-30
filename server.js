@@ -19,9 +19,6 @@ var shuffle = require('shuffle-array');
 //Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
-//Verzeichnis, in dem die playlist.txt hinterlegt wird
-const progDir = "/home/pi/mh_prog";
-
 //Verzeichnis, in dem die Audiodateien liegen
 const audioDir = "/media/audio";
 
@@ -238,7 +235,7 @@ wss.on('connection', function connection(ws) {
                     currentPosition = 0;
 
                     //Playlist-Datei laden und starten
-                    player.exec("loadlist " + progDir + "/playlist.txt");
+                    player.exec("loadlist playlist.txt");
                 }
 
                 //Wie viele Schritte in welche Richtung springen?
@@ -305,7 +302,7 @@ wss.on('connection', function connection(ws) {
                     currentPosition = 0;
 
                     //Playlist-Datei laden und starten
-                    player.exec("loadlist " + progDir + "/playlist.txt");
+                    player.exec("loadlist playlist.txt");
                 }
                 break;
 
@@ -478,10 +475,10 @@ function setPlaylist(reloadSession) {
         }
 
         //Playlist-Datei schreiben (1 Zeile pro item)
-        fs.writeFileSync(progDir + "/playlist.txt", currentFiles.join("\n"));
+        fs.writeFileSync("playlist.txt", currentFiles.join("\n"));
 
         //Playlist-Datei laden und starten
-        player.exec("loadlist " + progDir + "/playlist.txt");
+        player.exec("loadlist playlist.txt");
 
         //Wenn die Daten aus einer alten Session kommen
         if (reloadSession) {
