@@ -9,7 +9,6 @@
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
     "timelite": "0.0.10",
-    "vol": "^3.0.0",
     "ws": "^5.2.0"
   }
 }
