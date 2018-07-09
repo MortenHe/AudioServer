@@ -16,11 +16,27 @@ const fs = require('fs-extra');
 //Array Shuffle Funktion
 var shuffle = require('shuffle-array');
 
+//Farbiges Logging
+const colors = require('colors');
+
 //Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
-//Verzeichnis, in dem die Audiodateien liegen
-const audioDir = "/media/audio";
+//Verzeichnis, in dem die Audiodateien liegen (linxus vs. windows)
+const runMode = process.argv[2] ? process.argv[2] : "linux";
+const audioDir = runMode === "win" ? "C:/mplayer-audio" : "/media/audio";
+console.log("audio files are located in " + audioDir.yellow);
+
+//System-Lautstaerke zu Beginn auf 100% setzen
+//let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
+//console.log(initialVolumeCommand)
+//execSync(initialVolumeCommand);
+
+//System-Lautstaerke zu Beginn auf 100% setzen
+const vol = require('vol');
+vol.set(.02).then(() => {
+    console.log('set system volume to 100%'.green);
+});
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 50;
@@ -32,10 +48,8 @@ currentAllowRandom = false;
 currentActiveItem = "";
 currentPlaylist = "";
 
-//Lautstaerke zu Beginn setzen
-let initialVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
-console.log(initialVolumeCommand)
-execSync(initialVolumeCommand);
+//Player zu Beginn auf 50% stellen
+player.setVolume(currentVolume);
 
 //Wenn Playlist fertig ist
 player.on('playlist-finish', () => {
@@ -72,6 +86,9 @@ player.on('filename', (filename) => {
 
 //Wenn sich ein Titel aendert (durch Nutzer oder durch den Player)
 player.on('track-change', () => {
+
+    //ggf. weg?
+    player.setVolume(currentVolume);
 
     //Neuen Dateinamen liefern
     player.getProps(['filename']);
@@ -351,9 +368,8 @@ wss.on('connection', function connection(ws) {
                 }
 
                 //Lautstaerke setzen
-                let changeVolumeCommand = "sudo amixer sset PCM " + currentVolume + "% -M";
-                console.log(changeVolumeCommand)
-                execSync(changeVolumeCommand);
+                console.log("change volume to " + currentVolume);
+                player.setVolume(currentVolume);
 
                 //Nachricht mit Volume an clients schicken 
                 messageObjArr.push({
@@ -492,7 +508,7 @@ function setPlaylist(reloadSession) {
 
     //Verzeichnis existiert nicht
     else {
-        console.log("dir doesn't exist");
+        console.log("dir doesn't exist " + currentPlaylist.red);
     }
 }
 
