@@ -28,13 +28,8 @@ const audioDir = runMode === "win" ? "C:/mplayer-audio" : "/media/audio";
 console.log("audio files are located in " + audioDir.yellow);
 
 //System-Lautstaerke zu Beginn auf 100% setzen
-//let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
-//console.log(initialVolumeCommand)
-//execSync(initialVolumeCommand);
-
-//System-Lautstaerke zu Beginn auf 100% setzen
 const vol = require('vol');
-vol.set(.02).then(() => {
+vol.set(1).then(() => {
     console.log('set system volume to 100%'.green);
 });
 
@@ -86,9 +81,6 @@ player.on('filename', (filename) => {
 
 //Wenn sich ein Titel aendert (durch Nutzer oder durch den Player)
 player.on('track-change', () => {
-
-    //ggf. weg?
-    player.setVolume(currentVolume);
 
     //Neuen Dateinamen liefern
     player.getProps(['filename']);
