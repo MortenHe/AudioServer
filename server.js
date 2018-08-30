@@ -120,7 +120,6 @@ wss.on('connection', function connection(ws) {
 
         //Nachricht kommt als String -> in JSON Objekt konvertieren
         var obj = JSON.parse(message);
-        //console.log(obj)
 
         //Werte auslesen
         let type = obj.type;
@@ -521,7 +520,6 @@ function sendClientInfo(messageObjArr) {
 
     //Ueber Liste der MessageObjekte gehen
     messageObjArr.forEach(messageObj => {
-        //console.log(messageObj)
 
         //Ueber Liste der WS gehen und Nachricht schicken
         for (ws of wss.clients) {
