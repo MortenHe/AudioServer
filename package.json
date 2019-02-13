@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "socket.io server",
   "dependencies": {
-    "colors": "^1.3.2",
-    "fs-extra": "^7.0.0",
+    "colors": "^1.3.3",
+    "fs-extra": "^7.0.1",
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
-    "timelite": "0.0.11",
-    "ws": "^6.1.0"
+    "timelite": "1.0.0",
+    "ws": "^6.1.3"
   }
 }
