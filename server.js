@@ -9,17 +9,11 @@ const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
 //Zeit Formattierung laden: [5, 13, 22] => 05:13:22
 const timelite = require('timelite');
 
-//Filesystem und Path Abfragen fuer Playlist
+//Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
 const fs = require('fs-extra');
-
-//Array Shuffle Funktion
 var shuffle = require('shuffle-array');
-
-//Farbiges Logging
 const colors = require('colors');
-
-//Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
 //Verzeichnis, in dem die Audiodateien liegen (linxus vs. windows)
@@ -87,21 +81,13 @@ player.on('track-change', () => {
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
 if (fs.existsSync('./lastSession.json')) {
-
-    //JSON-Objekt aus Datei holen
     const lastSessionObj = fs.readJsonSync('./lastSession.json');
-
-    //Playlist-Pfad laden
     currentPlaylist = lastSessionObj.path;
     console.log("load playlist from last session " + currentPlaylist);
 
-    //Letztes aktives Item laden
+    //Letzte Infos laden
     currentActiveItem = lastSessionObj.activeItem;
-
-    //Laden, ob Randon erlaubt ist
     currentAllowRandom = lastSessionObj.allowRandom;
-
-    //letzte Position in Playlist laden
     currentPosition = lastSessionObj.position;
 
     //diese Playlist zu Beginn spielen
@@ -135,13 +121,9 @@ wss.on('connection', function connection(ws) {
             case "set-playlist": case "set-rfid-playlist":
                 console.log(type + JSON.stringify(value));
 
-                //Audio-Verzeichnis merken
+                //Audio-Verzeichnis, random und aktives Item merken
                 currentPlaylist = audioDir + "/" + value.mode + "/" + value.path;
-
-                //Merken ob Random erlaubt ist
                 currentAllowRandom = value.allowRandom;
-
-                //aktives Item setzen
                 currentActiveItem = value.path;
 
                 //neue Playlist und allowRandom in Session-JSON-File schreiben
@@ -180,10 +162,8 @@ wss.on('connection', function connection(ws) {
                 //wenn der naechste Song kommen soll
                 if (value) {
 
-                    //Wenn wir noch nicht beim letzten Titel sind
+                    //Wenn wir noch nicht beim letzten Titel sind, zum naechsten Titel springen
                     if (currentPosition < (currentFiles.length - 1)) {
-
-                        //zum naechsten Titel springen
                         player.next();
                     }
 
@@ -201,10 +181,8 @@ wss.on('connection', function connection(ws) {
                 //der vorherige Titel soll kommen
                 else {
 
-                    //Wenn wir nicht beim 1. Titel sind
+                    //Wenn wir nicht beim 1. Titel sind, zum vorherigen Titel springen
                     if (currentPosition > 0) {
-
-                        //zum vorherigen Titel springen
                         player.previous();
                     }
 
@@ -411,10 +389,8 @@ wss.on('connection', function connection(ws) {
         value: currentAllowRandom
     }];
 
-    //Ueber Objekte gehen, die an WS geschickt werden
+    //Ueber Objekte gehen, die an WS geschickt werden und Info schicken
     WSConnectObjectArr.forEach(messageObj => {
-
-        //Info an WS schicken
         ws.send(JSON.stringify(messageObj));
     });
 });
@@ -473,10 +449,8 @@ function setPlaylist(reloadSession) {
             }
         });
 
-        //Bei Random und erlaubtem Random
+        //Bei Random und erlaubtem Random, FileArray shuffeln
         if (currentRandom && currentAllowRandom) {
-
-            //FileArray shuffeln
             shuffle(currentFiles);
         }
 
