@@ -36,9 +36,6 @@ currentAllowRandom = false;
 currentActiveItem = "";
 currentPlaylist = "";
 
-//Player zu Beginn auf 50% stellen
-player.setVolume(currentVolume);
-
 //Wenn Playlist fertig ist
 player.on('playlist-finish', () => {
     console.log("playlist finished");
@@ -468,6 +465,9 @@ function setPlaylist(reloadSession) {
                 player.exec("pt_step " + currentPosition);
             }
         }
+
+        //Volume setzen auf config Wert (z.B. 50)
+        player.setVolume(currentVolume);
     }
 
     //Verzeichnis existiert nicht
