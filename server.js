@@ -35,6 +35,7 @@ currentRandom = false;
 currentAllowRandom = false;
 currentActiveItem = "";
 currentPlaylist = "";
+currentFileLength = 0;
 
 //Wenn Playlist fertig ist
 player.on('playlist-finish', () => {
@@ -69,11 +70,17 @@ player.on('filename', (filename) => {
     }]);
 });
 
+//Wenn bei Track change die Filelength geliefert wird, diese merken
+player.on('length', (length) => {
+    currentFileLength = length;
+});
+
 //Wenn sich ein Titel aendert (durch Nutzer oder durch den Player)
 player.on('track-change', () => {
 
-    //Neuen Dateinamen liefern
+    //Neuen Dateinamen und Dateilaenge liefern
     player.getProps(['filename']);
+    player.getProps(['length']);
 });
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
@@ -399,7 +406,7 @@ function startTimer() {
     player.on('time_pos', (totalSecondsFloat) => {
 
         //Float zu int: 13.4323 => 13
-        let totalSeconds = Math.trunc(totalSecondsFloat);
+        let totalSeconds = currentFileLength - Math.trunc(totalSecondsFloat);
         console.log('track progress is', totalSeconds);
 
         //Umrechung der Sekunden in [h, m, s] fuer formattierte Darstellung
