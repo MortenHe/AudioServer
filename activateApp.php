@@ -1,4 +1,5 @@
 <?php
+header('Access-Control-Allow-Origin: *');
 
 //Welcher Modus soll gestartet werden
 $mode = filter_input(INPUT_GET, 'mode');
