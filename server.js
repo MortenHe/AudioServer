@@ -27,7 +27,7 @@ console.log(initialVolumeCommand)
 execSync(initialVolumeCommand);
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
-currentVolume = 50;
+currentVolume = 80;
 currentPosition = -1;
 currentFiles = [];
 currentPaused = false;
