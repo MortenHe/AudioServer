@@ -22,9 +22,9 @@ const audioDir = runMode === "win" ? "C:/mplayer-audio" : "/media/audio";
 console.log("audio files are located in " + audioDir.yellow);
 
 //Lautstaerke zu Beginn auf 100% setzen
-let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
-console.log(initialVolumeCommand)
-execSync(initialVolumeCommand);
+//let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
+//console.log(initialVolumeCommand)
+//execSync(initialVolumeCommand);
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 80;
