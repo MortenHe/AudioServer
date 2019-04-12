@@ -21,11 +21,6 @@ const runMode = process.argv[2] ? process.argv[2] : "linux";
 const audioDir = runMode === "win" ? "C:/mplayer-audio" : "/media/audio";
 console.log("audio files are located in " + audioDir.yellow);
 
-//Lautstaerke zu Beginn auf 100% setzen
-let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
-console.log(initialVolumeCommand)
-execSync(initialVolumeCommand);
-
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 80;
 currentPosition = -1;
@@ -36,6 +31,9 @@ currentAllowRandom = false;
 currentActiveItem = "";
 currentPlaylist = "";
 currentFileLength = 0;
+
+//initiale Lautstaerke setzen
+setVolume();
 
 //Wenn Playlist fertig ist
 player.on('playlist-finish', () => {
@@ -340,8 +338,7 @@ wss.on('connection', function connection(ws) {
                 }
 
                 //Lautstaerke setzen
-                console.log("change volume to " + currentVolume);
-                player.setVolume(currentVolume);
+                setVolume();
 
                 //Nachricht mit Volume an clients schicken 
                 messageObjArr.push({
@@ -472,9 +469,6 @@ function setPlaylist(reloadSession) {
                 player.exec("pt_step " + currentPosition);
             }
         }
-
-        //Volume setzen auf config Wert (z.B. 50)
-        player.setVolume(currentVolume);
     }
 
     //Verzeichnis existiert nicht
@@ -510,4 +504,11 @@ function sendClientInfo(messageObjArr) {
             catch (e) { }
         }
     });
+}
+
+//Lautstaerke setzen
+function setVolume() {
+    let initialVolumeCommand = "sudo amixer sset Digital " + currentVolume + "% -M";
+    console.log(initialVolumeCommand)
+    execSync(initialVolumeCommand);
 }
