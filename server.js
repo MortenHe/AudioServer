@@ -16,9 +16,9 @@ var shuffle = require('shuffle-array');
 const colors = require('colors');
 const { execSync } = require('child_process');
 
-//Verzeichnis, in dem die Audiodateien liegen (linxus vs. windows)
-const runMode = process.argv[2] ? process.argv[2] : "linux";
-const audioDir = runMode === "win" ? "C:/mplayer-audio" : "/media/audio";
+//Aus Config auslesen wo die Audio-Dateien liegen
+const configFile = fs.readJsonSync('config.json');
+const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
@@ -508,7 +508,7 @@ function sendClientInfo(messageObjArr) {
 
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset Digital " + currentVolume + "% -M";
+    let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
 }
