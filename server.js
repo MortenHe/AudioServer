@@ -508,7 +508,7 @@ function sendClientInfo(messageObjArr) {
 
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+    let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + currentVolume + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
 }
