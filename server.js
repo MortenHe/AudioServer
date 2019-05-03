@@ -331,7 +331,7 @@ function startTimer() {
         let output = [hours, minutes, seconds];
 
         //[2,44,1] => 02:44:01
-        let outputString = timelite.time.str(output);
+        data["time"] = timelite.time.str(output);
 
         //Clients ueber aktuelle Zeit informieren
         sendClientInfo(["time"]);
