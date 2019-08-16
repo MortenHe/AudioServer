@@ -1,4 +1,4 @@
 {
-    "audioDir": "/media/audio",
+    "audioDir": "/media/usb_audio/audio",
     "audioOutput": "Digital"
 }
