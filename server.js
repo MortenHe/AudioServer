@@ -30,6 +30,7 @@ data["paused"] = false;
 data["random"] = false;
 data["allowRandom"] = false;
 data["activeItem"] = "";
+data["activeItemName"] = "";
 data["playlist"] = "";
 data["fileLength"] = 0;
 data["time"] = 0;
@@ -85,6 +86,7 @@ if (fs.existsSync('./lastSession.json')) {
 
     //Letzte Infos laden
     data["activeItem"] = lastSessionObj.activeItem;
+    data["activeItemName"] = lastSessionObj.activeItemName;
     data["allowRandom"] = lastSessionObj.allowRandom;
     data["position"] = lastSessionObj.position;
 
@@ -121,6 +123,7 @@ wss.on('connection', function connection(ws) {
                 data["playlist"] = audioDir + "/" + value.mode + "/" + value.path;
                 data["allowRandom"] = value.allowRandom;
                 data["activeItem"] = value.path;
+                data["activeItemName"] = value.name;
 
                 //neue Playlist und allowRandom in Session-JSON-File schreiben
                 writeSessionJson();
@@ -131,8 +134,8 @@ wss.on('connection', function connection(ws) {
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
 
-                //Zusaetzliche Nachricht an clients, dass nun nicht mehr pausiert ist, welches das active-item und file-list
-                messageArr.push("paused", "activeItem", "files", "allowRandom");
+                //Zusaetzliche Nachricht an clients
+                messageArr.push("paused", "activeItem", "activeItemName", "files", "allowRandom");
                 break;
 
             //Song wurde vom Nutzer weitergeschaltet
@@ -297,7 +300,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "allowRandom"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom"];
 
     //Ueber Messages gehen, die an Clients geschickt werden
     WSConnectMessageArr.forEach(message => {
@@ -391,11 +394,10 @@ function setPlaylist(reloadSession) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-
-    //Playlist zusammen mit anderen Merkmalen merken fuer den Neustart
     fs.writeJsonSync('./lastSession.json', {
         path: data["playlist"],
         activeItem: data["activeItem"],
+        activeItemName: data["activeItemName"],
         allowRandom: data["allowRandom"],
         position: data["position"]
     });
