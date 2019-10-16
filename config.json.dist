@@ -1,4 +1,4 @@
 {
     "audioDir": "/media/usb_audio/audio",
-    "audioOutput": "Digital"
+    "audioOutput": "Digital|PCM|Master|Headphone,1"
 }
