@@ -92,8 +92,8 @@ player.on('track-change', () => {
 });
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
-if (fs.existsSync('./lastSession.json')) {
-    const lastSessionObj = fs.readJsonSync('./lastSession.json');
+if (fs.existsSync(__dirname + "/lastSession.json")) {
+    const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
     data["playlist"] = lastSessionObj.path;
     console.log("load playlist from last session " + data["playlist"]);
 
@@ -207,7 +207,7 @@ wss.on('connection', function connection(ws) {
                 //Wenn Playlist schon fertig ist, wieder von vorne beginnen, Playlist laden und starten
                 if (data["position"] === -1) {
                     data["position"] = 0;
-                    player.exec("loadlist playlist.txt");
+                    player.exec("loadlist " + __dirname + "/playlist.txt");
                 }
 
                 //Wie viele Schritte in welche Richtung springen?
@@ -254,7 +254,7 @@ wss.on('connection', function connection(ws) {
                 //Playlist ist schon vorbei -> wieder von vorne beginnen, Playlist laden und starten
                 else {
                     data["position"] = 0;
-                    player.exec("loadlist playlist.txt");
+                    player.exec("loadlist " + __dirname + "/playlist.txt");
                 }
                 break;
 
@@ -384,10 +384,10 @@ function setPlaylist(reloadSession) {
         }
 
         //Playlist-Datei schreiben (1 Zeile pro item)
-        fs.writeFileSync("playlist.txt", data["files"].join("\n"));
+        fs.writeFileSync(__dirname + "/playlist.txt", data["files"].join("\n"));
 
         //Playlist-Datei laden und starten
-        player.exec("loadlist playlist.txt");
+        player.exec("loadlist " + __dirname + "/playlist.txt");
 
         //Wenn die Daten aus einer alten Session kommen
         if (reloadSession) {
@@ -407,7 +407,7 @@ function setPlaylist(reloadSession) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-    fs.writeJsonSync('./lastSession.json', {
+    fs.writeJsonSync(__dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
