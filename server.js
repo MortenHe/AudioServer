@@ -240,7 +240,7 @@ wss.on('connection', function connection(ws) {
                 break;
 
             //Pause-Status toggeln
-            case 'toggle-paused-restart':
+            case 'toggle-paused-restart': 'toggle-paused':
 
                 //Wenn wir gerade in der Playlist sind
                 if (data["position"] !== -1) {
