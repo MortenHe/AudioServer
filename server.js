@@ -156,7 +156,7 @@ wss.on('connection', function connection(ws) {
                 console.log("change-item " + value);
 
                 //wenn der naechste Song kommen soll
-                if (value) {
+                if (value === 1) {
 
                     //Wenn wir noch nicht beim letzten Titel sind, zum naechsten Titel springen
                     if (data["position"] < (data["files"].length - 1)) {
