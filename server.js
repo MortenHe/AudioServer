@@ -3,22 +3,6 @@ const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
 const { spawn } = require('child_process');
 
-//WebSocketServer anlegen und starten
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
-
-//GPIO Buttons starten
-const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js"]);
-buttons_gpio.stdout.on("data", (data) => {
-    console.log("button event: " + data);
-});
-
-//USB RFID Reader starten
-const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js"]);
-rfid_usb.stdout.on('data', (data) => {
-    console.log("rfid event: " + data);
-});
-
 //Zeit Formattierung laden: [5, 13, 22] => 05:13:22
 const timelite = require('timelite');
 
@@ -29,10 +13,32 @@ var shuffle = require('shuffle-array');
 const colors = require('colors');
 const { execSync } = require('child_process');
 
+//WebSocketServer anlegen und starten
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
+
 //Aus Config auslesen wo die Audio-Dateien liegen
 const configFile = fs.readJsonSync(__dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
+
+//GPIO Buttons starten, falls konfiguriert
+if (configFile.GPIOButtons) {
+    console.log("Use GPIO Buttons");
+    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js"]);
+    buttons_gpio.stdout.on("data", (data) => {
+        console.log("button event: " + data);
+    });
+}
+
+//USB RFID Reader starten, falls konfiguriert
+if (configFile.USBRFIDReader) {
+    console.log("Use USB RFID Reader");
+    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js"]);
+    rfid_usb.stdout.on('data', (data) => {
+        console.log("rfid event: " + data);
+    });
+}
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
