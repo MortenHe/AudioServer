@@ -22,6 +22,10 @@ const configFile = fs.readJsonSync(__dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
+//Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
+const countdownTime = 10;
+var countdownID = null;
+
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
@@ -53,6 +57,7 @@ data["activeItemName"] = "";
 data["playlist"] = "";
 data["fileLength"] = 0;
 data["time"] = 0;
+data["countdownTime"] = -1;
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -66,6 +71,12 @@ player.on('playlist-finish', () => {
 
     //Info in JSON schreiben, dass Playlist vorbei ist
     writeSessionJson();
+
+    //Countdown starten
+    if (!countdownID) {
+        console.log("start countdown");
+        startCountdown();
+    }
 
     //Clients informieren, dass Playlist fertig ist (position -1)
     sendClientInfo(["position"]);
@@ -144,6 +155,9 @@ wss.on('connection', function connection(ws) {
                 data["activeItem"] = value.path;
                 data["activeItemName"] = value.name;
 
+                //Countdown abbrechen
+                resetCountdown();
+
                 //neue Playlist und allowRandom in Session-JSON-File schreiben
                 writeSessionJson();
 
@@ -160,6 +174,9 @@ wss.on('connection', function connection(ws) {
             //Song wurde vom Nutzer weitergeschaltet
             case 'change-item':
                 console.log("change-item " + value);
+
+                //Countdown abbrechen
+                resetCountdown();
 
                 //wenn der naechste Song kommen soll
                 if (value === 1) {
@@ -210,6 +227,9 @@ wss.on('connection', function connection(ws) {
             //Sprung zu einem bestimmten Titel in Playlist
             case "jump-to":
 
+                //Countdown abbrechen
+                resetCountdown();
+
                 //Wenn Playlist schon fertig ist, wieder von vorne beginnen, Playlist laden und starten
                 if (data["position"] === -1) {
                     data["position"] = 0;
@@ -255,12 +275,25 @@ wss.on('connection', function connection(ws) {
                     data["paused"] = !data["paused"];
                     player.playPause();
                     messageArr.push("paused");
+
+                    //Wenn jetzt pausiert ist, Countdown starten
+                    if (data["paused"]) {
+                        startCountdown();
+                    }
+
+                    //Pausierung wurde beendet -> Countdown beenden
+                    else {
+                        resetCountdown();
+                    }
                 }
 
                 //Playlist ist schon vorbei -> wieder von vorne beginnen, Playlist laden und starten
                 else {
                     data["position"] = 0;
                     player.exec("loadlist " + __dirname + "/playlist.txt");
+
+                    //Countdown abbrechen
+                    resetCountdown();
                 }
                 break;
 
@@ -304,13 +337,7 @@ wss.on('connection', function connection(ws) {
 
             //System herunterfahren
             case "shutdown":
-                console.log("shutdown");
-
-                //Shutdown-Info an Clients schicken
-                sendClientInfo(["shutdown"]);
-
-                //Pi herunterfahren
-                execSync("shutdown -h now");
+                shutdown();
                 break;
         }
 
@@ -319,7 +346,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime"];
 
     //Ueber Messages gehen, die an Clients geschickt werden
     WSConnectMessageArr.forEach(message => {
@@ -449,4 +476,51 @@ function setVolume() {
     let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
+}
+
+//Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
+function startCountdown() {
+    console.log("start countdown")
+    data["countdownTime"] = countdownTime;
+    countdownID = setInterval(countdown, 1000);
+}
+
+//Countdown fuer Shutdown wieder stoppen, weil nun etwas passiert und Countdowntime zuruecksetzen und Clients informieren
+function resetCountdown() {
+    console.log("reset countdown");
+    clearInterval(countdownID);
+    countdownID = null;
+    data["countdownTime"] = -1;
+    sendClientInfo(["countdownTime"]);
+}
+
+//Bei Inaktivitaet Countdown runterzaehlen und Shutdown ausfuehren
+function countdown() {
+
+    //Wenn der Countdown noch nicht abgelaufen ist
+    if (data["countdownTime"] >= 0) {
+        console.log("shutdown in " + data["countdownTime"] + " seconds");
+
+        //Anzahl der Sekunden bis Countdown an Clients schicken
+        sendClientInfo(["countdownTime"]);
+
+        //Zeit runterzaehlen
+        data["countdownTime"]--;
+    }
+
+    //Countdown ist abgelaufen, Shutdown durchfuehren
+    else {
+        shutdown();
+    }
+}
+
+//Pi herunterfahren
+function shutdown() {
+    console.log("shutdown");
+
+    //Shutdown-Info an Clients schicken
+    sendClientInfo(["shutdown"]);
+
+    //Pi herunterfahren
+    //execSync("shutdown -h now");
 }
