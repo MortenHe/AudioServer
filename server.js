@@ -23,7 +23,7 @@ const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
-const countdownTime = 10;
+const countdownTime = configFile.countdownTime;
 var countdownID = null;
 
 //GPIO Buttons starten, falls konfiguriert
@@ -74,7 +74,6 @@ player.on('playlist-finish', () => {
 
     //Countdown starten
     if (!countdownID) {
-        console.log("start countdown");
         startCountdown();
     }
 
