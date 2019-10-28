@@ -17,7 +17,11 @@ case "audio":
 
 //SH Audio Player
 case "sh":
-    exec('sudo /home/pi/mh_prog/NewSHAudioServer/startnodesh.sh');
+
+    //Ggf. schon audioMode uebergeben, der gestartet werden soll
+    $audioMode = filter_input(INPUT_GET, 'audioMode');
+    $suffix = $audioMode ? " " . $audioMode : "";
+    exec('sudo /home/pi/mh_prog/NewSHAudioServer/startnodesh.sh' . $suffix);
     break;
 
 //Sound Quiz
