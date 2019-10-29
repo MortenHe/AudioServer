@@ -26,7 +26,12 @@ case "sh":
 
 //Sound Quiz
 case "soundquiz":
-    exec('sudo /home/pi/mh_prog/SoundQuizServer/startnodesound.sh');
+     
+    //Ggf. schon Spiel uebergeben, das gestartet werden soll
+    $gameSelect = filter_input(INPUT_GET, 'gameSelect');
+    $suffix = $gameSelect ? " " . $gameSelect : "";
+
+    exec('sudo /home/pi/mh_prog/SoundQuizServer/startnodesound.sh' . $suffix);
     break;
 }
 ?>
