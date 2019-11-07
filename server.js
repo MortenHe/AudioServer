@@ -109,18 +109,23 @@ player.on('track-change', () => {
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
 if (fs.existsSync(__dirname + "/lastSession.json")) {
-    const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
-    data["playlist"] = lastSessionObj.path;
-    console.log("load playlist from last session " + data["playlist"]);
+    try {
+        const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
+        data["playlist"] = lastSessionObj.path;
+        console.log("load playlist from last session " + data["playlist"]);
 
-    //Letzte Infos laden
-    data["activeItem"] = lastSessionObj.activeItem;
-    data["activeItemName"] = lastSessionObj.activeItemName;
-    data["allowRandom"] = lastSessionObj.allowRandom;
-    data["position"] = lastSessionObj.position;
+        //Letzte Infos laden
+        data["activeItem"] = lastSessionObj.activeItem;
+        data["activeItemName"] = lastSessionObj.activeItemName;
+        data["allowRandom"] = lastSessionObj.allowRandom;
+        data["position"] = lastSessionObj.position;
 
-    //diese Playlist zu Beginn spielen
-    setPlaylist(true);
+        //diese Playlist zu Beginn spielen
+        setPlaylist(true);
+    }
+    catch (e) {
+        console.log("invalid lastSeesion.json file");
+    }
 }
 
 //TimeFunktion starten, die aktuelle Laufzeit des Titels liefert
