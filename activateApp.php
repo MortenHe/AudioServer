@@ -33,5 +33,10 @@ case "soundquiz":
 
     exec('sudo /home/pi/mh_prog/SoundQuizServer/startnodesound.sh' . $suffix);
     break;
+
+//Sound Quiz Player
+case "soundquizplayer":
+    exec('sudo /home/pi/mh_prog/SoundQuizServer/startnodesoundplayer.sh' . $suffix);
+    break;
 }
 ?>
