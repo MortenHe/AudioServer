@@ -22,6 +22,9 @@ const configFile = fs.readJsonSync(__dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
+//Wo liegen die Joker Ordner?
+const jokerDir = "hsp/misc";
+
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
 var countdownID = null;
@@ -337,6 +340,14 @@ wss.on('connection', function connection(ws) {
                 //Lautstaerke setzen und Clients informieren
                 setVolume();
                 messageArr.push("volume");
+                break;
+
+            //Eine existierende Playlist in den Jokerordner kopieren (vorher Verzeichnis leeren)
+            case "set-joker":
+                let jokerFolder = audioDir + "/" + jokerDir + "/joker-" + value.jokerMode;
+                let wantedJokerFolder = audioDir + "/" + value.wantedJokerFolder;
+                fs.emptyDirSync(jokerFolder);
+                fs.copySync(wantedJokerFolder, jokerFolder);
                 break;
 
             //System herunterfahren
