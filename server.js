@@ -61,6 +61,7 @@ data["playlist"] = "";
 data["fileLength"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
+data["jokerLock"] = false;
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -344,10 +345,47 @@ wss.on('connection', function connection(ws) {
 
             //Eine existierende Playlist in den Jokerordner kopieren (vorher Verzeichnis leeren)
             case "set-joker":
+                if (data["jokerLock"]) {
+                    console.log("joker is locked");
+                    return;
+                }
+
+                //Lock setzen, damit nicht 2 Leute gleichzeitig den Joker Ordner setzen und direkt die Nutzer informieren
+                data["jokerLock"] = true;
+                sendClientInfo(["jokerLock"]);
+
+                //Ermitteln von wo nach wo die Dateien kopiert werden
                 let jokerFolder = audioDir + "/" + jokerDir + "/joker-" + value.jokerMode;
                 let wantedJokerFolder = audioDir + "/" + value.wantedJokerFolder;
+
+                //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
+                if (data["playlist"] === jokerFolder) {
+                    console.log("stop joker folder playback");
+                    player.stop();
+                }
+
+                //Joker Verzeichnis leeren
+                console.log("empty joker dir " + jokerFolder);
                 fs.emptyDirSync(jokerFolder);
+
+                //Neuen Dateien dorthin kopieren
+                console.log("copy files from " + wantedJokerFolder + " to joker folder " + jokerFolder);
                 fs.copySync(wantedJokerFolder, jokerFolder);
+
+                //Lock wieder oeffnen nach Kopiervorgang und Benutzer informieren
+                data["jokerLock"] = false;
+                messageArr.push("jokerLock");
+
+                //Joker-Folder lief gerade noch -> wieder starten mit neuen Dateien
+                if (data["playlist"] === jokerFolder) {
+                    console.log("start joker folder with new tracks");
+
+                    //Info an Clients ueber neue Files
+                    messageArr.push("paused", "files");
+
+                    //Setlist erstellen und starten
+                    setPlaylist(false);
+                }
                 break;
 
             //System herunterfahren
