@@ -13,6 +13,9 @@ var shuffle = require('shuffle-array');
 const colors = require('colors');
 const { execSync } = require('child_process');
 
+//Befehl fuer Autostart in Datei schreiben
+fs.writeFile("/home/pi/wss-install/last-player", "AUTOSTART=sudo /home/pi/mh_prog/AudioServer/startnode.sh");
+
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
@@ -49,7 +52,7 @@ if (configFile.USBRFIDReader) {
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
-data["volume"] = 80;
+data["volume"] = configFile["volume"];
 data["position"] = -1;
 data["files"] = [];
 data["paused"] = false;
