@@ -62,6 +62,7 @@ data["activeItem"] = "";
 data["activeItemName"] = "";
 data["playlist"] = "";
 data["fileLength"] = 0;
+data["secondsPlayed"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
 data["jokerLock"] = false;
@@ -211,9 +212,20 @@ wss.on('connection', function connection(ws) {
                 //der vorherige Titel soll kommen
                 else {
 
-                    //Wenn wir nicht beim 1. Titel sind, zum vorherigen Titel springen
+                    //Wenn wir nicht beim 1. Titel sind
                     if (data["position"] > 0) {
-                        player.previous();
+
+                        //Wenn weniger als x Sekunden vergangen sind -> zum vorherigen Titel springen
+                        if (data["secondsPlayed"] < 3) {
+                            console.log("go to previous track")
+                            player.previous();
+                        }
+
+                        //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
+                        else {
+                            console.log("repeat current track");
+                            player.seekPercent(0);
+                        }
                     }
 
                     //wir sind beim 1. Titel
@@ -422,9 +434,13 @@ function startTimer() {
     //Wenn time_pos property geliefert wirde
     player.on('time_pos', (totalSecondsFloat) => {
 
-        //Float zu int: 13.4323 => 13
-        let totalSeconds = data["fileLength"] - Math.trunc(totalSecondsFloat);
-        console.log('track progress is', totalSeconds);
+        //Wie viele Sekunden ist der Track schon gelaufen? Float zu int: 13.4323 => 13
+        data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
+        console.log("track progress ", data["secondsPlayed"]);
+
+        //Wie viele Sekunden laeuft der Track noch?
+        let totalSeconds = data["fileLength"] - data["secondsPlayed"];
+        console.log('track time left ', totalSeconds);
 
         //Umrechung der Sekunden in [h, m, s] fuer formattierte Darstellung
         let hours = Math.floor(totalSeconds / 3600);
