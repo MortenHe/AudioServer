@@ -25,8 +25,8 @@ const configFile = fs.readJsonSync(__dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
-//Wo liegen die Joker Ordner?
-const jokerDir = "hsp/misc";
+//Wo liegt der Joker-Ordner?
+const jokerFolder = audioDir + "/hsp/misc/joker";
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -369,9 +369,8 @@ wss.on('connection', function connection(ws) {
                 data["jokerLock"] = true;
                 sendClientInfo(["jokerLock"]);
 
-                //Ermitteln von wo nach wo die Dateien kopiert werden
-                let jokerFolder = audioDir + "/" + jokerDir + "/joker-" + value.jokerMode;
-                let wantedJokerFolder = audioDir + "/" + value.wantedJokerFolder;
+                //Aus welchem Ordner kommt der Joker-Inhalt
+                let wantedJokerFolder = audioDir + "/" + value;
 
                 //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
                 if (data["playlist"] === jokerFolder) {
@@ -436,11 +435,10 @@ function startTimer() {
 
         //Wie viele Sekunden ist der Track schon gelaufen? Float zu int: 13.4323 => 13
         data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
-        console.log("track progress ", data["secondsPlayed"]);
 
         //Wie viele Sekunden laeuft der Track noch?
         let totalSeconds = data["fileLength"] - data["secondsPlayed"];
-        console.log('track time left ', totalSeconds);
+        console.log("track progress " + data["secondsPlayed"] + " - track time left " + totalSeconds);
 
         //Umrechung der Sekunden in [h, m, s] fuer formattierte Darstellung
         let hours = Math.floor(totalSeconds / 3600);
