@@ -8,6 +8,8 @@ const timelite = require('timelite');
 
 //Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
+const glob = require("glob");
+const _ = require("underscore");
 const fs = require('fs-extra');
 var shuffle = require('shuffle-array');
 const colors = require('colors');
@@ -27,6 +29,9 @@ console.log("audio files are located in " + audioDir.yellow);
 
 //Wo liegt der Joker-Ordner?
 const jokerFolder = audioDir + "/hsp/misc/joker";
+
+//Wo liegen die Mix-Files
+const mixDir = audioDir + "/kindermusik/misc/mix"
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -66,6 +71,23 @@ data["secondsPlayed"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
 data["jokerLock"] = false;
+data["mixFiles"] = [];
+
+//Aktuellen Inhalt des MixFolders holen
+getMixFiles();
+
+//Auswaehlbar mp3 Dateien fuer MIX ermitteln, Dateien aus Joker und Mix-Ordner nicht anbieten
+const mp3Files = glob.sync(audioDir + "/../{audio,shplayer}/**/*.mp3", { "ignore": [mixDir + "/*.mp3", audioDir + "/hsp/misc/joker/*.mp3"] })
+const searchFiles = mp3Files.map(filePath => {
+    return {
+        "path": filePath,
+        "name": path.basename(filePath, '.mp3'),
+        "date": fs.statSync(filePath).birthtime
+    }
+});
+
+//Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
+data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -402,6 +424,55 @@ wss.on('connection', function connection(ws) {
                 }
                 break;
 
+            //Mix-Ordner anpassen (Dateien loeschen, umbenennen, neu hinkopieren)
+            case "update-mix-folder":
+
+                //Mix-Folder laueft gerade -> Playback stoppen
+                if (data["playlist"] === mixDir) {
+                    console.log("stop mix folder playback");
+                    player.stop();
+                }
+
+                //Ueber einzelne Aktionen (add, rename, remove) gehen und ausfuehren
+                for (action of value) {
+                    switch (action.type) {
+
+                        //Neue Datei kommt aus Ordner ausserhalb
+                        case "copy":
+                            console.log("copy " + action.from + " to " + action.to);
+                            fs.copySync(action.from, action.to);
+                            break;
+
+                        //Datei aus Mixordner wird umbenannt fuer passende Reihenfolge
+                        case "move":
+                            console.log("move " + action.from + " to " + action.to);
+                            fs.moveSync(action.from, action.to);
+                            break;
+
+                        //Datei aus Mixordner wird geloescht
+                        case "remove":
+                            console.log("delete " + action.path);
+                            fs.removeSync(action.path);
+                            break;
+                    }
+                }
+
+                //Aktualisierten Inhalt des Mix-Folders ermitteln und an Clients melden
+                getMixFiles();
+                messageArr.push("mixFiles");
+
+                //Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
+                if (data["playlist"] === mixDir) {
+                    console.log("start mix folder with new tracks");
+
+                    //Info an Clients ueber neue Files
+                    messageArr.push("paused", "files");
+
+                    //Setlist erstellen und starten
+                    setPlaylist(false);
+                }
+                break;
+
             //System herunterfahren
             case "shutdown":
                 shutdown();
@@ -412,18 +483,13 @@ wss.on('connection', function connection(ws) {
         sendClientInfo(messageArr);
     });
 
-    //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime"];
-
-    //Ueber Messages gehen, die an Clients geschickt werden
+    //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixFiles", "searchFiles"];
     WSConnectMessageArr.forEach(message => {
-
-        //Message-Object erzeugen und an Client schicken
-        let messageObj = {
+        ws.send(JSON.stringify({
             "type": message,
             "value": data[message]
-        };
-        ws.send(JSON.stringify(messageObj));
+        }));
     });
 });
 
@@ -537,6 +603,17 @@ function sendClientInfo(messageArr) {
                 ws.send(JSON.stringify(messageObj));
             }
             catch (e) { }
+        }
+    });
+}
+
+//Aktuelle Dateien aus Mix-Ordner holen
+function getMixFiles() {
+    const mixFolderFiles = glob.sync(mixDir + "/*.mp3")
+    data["mixFiles"] = mixFolderFiles.map(path => {
+        return {
+            "type": "old",
+            "path": path
         }
     });
 }
