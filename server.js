@@ -72,6 +72,10 @@ data["time"] = 0;
 data["countdownTime"] = -1;
 data["jokerLock"] = false;
 data["mixFiles"] = [];
+data["mainJSON"] = {};
+
+//JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
+getMainJSON();
 
 //Aktuellen Inhalt des MixFolders holen
 getMixFiles();
@@ -484,7 +488,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixFiles", "searchFiles"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixFiles", "searchFiles", "mainJSON"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -605,6 +609,89 @@ function sendClientInfo(messageArr) {
             catch (e) { }
         }
     });
+}
+
+//JSON fuer Oberflaeche berechnen mit aktiven Foldern, Filtern,...
+function getMainJSON() {
+
+    //In Audiolist sind Infos ueber Modes und Filter
+    const jsonFilePath = glob.sync("/var/www/html/wap/assets/json/*/audiolist.json")[0];
+    const jsonObj = fs.readJSONSync(jsonFilePath);
+
+    //Array, damit auslesen der einzelnen Unter-JSONs (bibi-tina.json, bobo.json) parallel erfolgen kann
+    let modeDataFileArr = [];
+
+    //Ueber Modes gehen (hsp, kindermusik, musikmh)
+    for (let [mode, modeData] of Object.entries(jsonObj)) {
+
+        //merken, welche Filter geloescht werden sollen
+        let inactiveFilters = [];
+
+        //Ueber Filter des Modus gehen (bibi-tina, bobo,...)
+        modeData["filter"]["filters"].forEach((filterData, index) => {
+
+            //filterID merken (bibi-tina, bobo)
+            let filterID = filterData["id"];
+
+            //All-Filter wird immer angezeigt -> "active" loeschen (wird nicht fuer die Oberflaeche benoetigt)
+            if (filterID === "all") {
+                delete jsonObj[mode]["filter"]["filters"][index]["active"];
+                return;
+            }
+
+            //Wenn Modus aktiv ist
+            if (filterData["active"]) {
+
+                //Feld "active" loeschen (wird nicht fuer die Oberflaeche benoetigt)
+                delete jsonObj[mode]["filter"]["filters"][index]["active"];
+
+                //JSON dieses Filters holen (z.B. bibi-tina.json)
+                modeData = {
+                    data: fs.readJSONSync("/var/www/html/wap/assets/json/pw/" + mode + "/" + filterID + ".json"),
+                    filterID: filterID,
+                    mode: mode
+                };
+
+                //Titel merken eines Items
+                modeDataFileArr.push(modeData);
+            }
+
+            //Filter (und die zugehoerigen Dateien) sollen nicht sichtbar sein -> Filter sammeln -> wird spaeter geloescht
+            else {
+                inactiveFilters.push(filterData);
+            }
+        });
+
+        //Ueber inaktive Filter gehen und aus JSON-Obj loeschen
+        inactiveFilters.forEach(filter => {
+            let filterIndex = jsonObj[mode]["filter"]["filters"].indexOf(filter);
+            jsonObj[mode]["filter"]["filters"].splice(filterIndex, 1);
+        });
+
+        //Ueber die Treffer (JSON-files) gehen
+        modeDataFileArr.forEach(result => {
+
+            //Ueber Daten (z.B. einzelne Audio-Playlists) gehen
+            result["data"].forEach(modeItem => {
+
+                //Wenn Playlist aktiv ist
+                if (modeItem["active"]) {
+
+                    //Feld "active" loeschen
+                    delete modeItem["active"];
+
+                    //Modus einfuegen (damit Filterung in Oberflaeche geht)
+                    modeItem["mode"] = result["filterID"];
+
+                    //Playlist-Objekt in Ausgabe Objekt einfuegen
+                    jsonObj[result["mode"]]["items"].push(modeItem);
+                }
+            });
+        });
+    }
+
+    //Wert merken, damit er an Clients uebergeben werden kann
+    data["mainJSON"] = jsonObj;
 }
 
 //Aktuelle Dateien aus Mix-Ordner holen
