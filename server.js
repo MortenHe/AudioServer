@@ -646,8 +646,9 @@ function getMainJSON() {
                 delete jsonObj[mode]["filter"]["filters"][index]["active"];
 
                 //JSON dieses Filters holen (z.B. bibi-tina.json)
+                const jsonLink = glob.sync("/var/www/html/wap/assets/json/*/" + mode + "/" + filterID + ".json")[0];
                 modeData = {
-                    data: fs.readJSONSync("/var/www/html/wap/assets/json/pw/" + mode + "/" + filterID + ".json"),
+                    data: fs.readJSONSync(jsonLink),
                     filterID: filterID,
                     mode: mode
                 };
