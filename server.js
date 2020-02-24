@@ -1,3 +1,6 @@
+//Lautstaerke
+const volumes = require('volumes');
+
 //Mplayer + Wrapper anlegen
 const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
@@ -708,9 +711,7 @@ function getMixFiles() {
 
 //Lautstaerke setzen
 function setVolume() {
-    const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
-    console.log(initialVolumeCommand)
-    execSync(initialVolumeCommand);
+    volumes.set(data["volume"]);
 }
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
