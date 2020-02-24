@@ -1,4 +1,5 @@
 {
+    "user": "pi",
     "audioDir": "/media/usb_audio/audio",
     "audioOutput": "Digital",
     "volume": 80,

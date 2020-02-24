@@ -18,9 +18,6 @@ var shuffle = require('shuffle-array');
 const colors = require('colors');
 const { execSync } = require('child_process');
 
-//Befehl fuer Autostart in Datei schreiben
-fs.writeFile("/home/pi/wss-install/last-player", "AUTOSTART=sudo /home/pi/mh_prog/AudioServer/startnode.sh");
-
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
@@ -29,6 +26,9 @@ const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
 const configFile = fs.readJsonSync(__dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
+
+//Befehl fuer Autostart in Datei schreiben
+fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/AudioServer/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
 const jokerFolder = audioDir + "/hsp/misc/joker";
