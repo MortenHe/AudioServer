@@ -10,7 +10,6 @@
     "shuffle-array": "^1.0.1",
     "timelite": "1.0.0",
     "underscore": "^1.9.2",
-    "volumes": "^1.0.7",
     "ws": "^6.1.3"
   }
 }
