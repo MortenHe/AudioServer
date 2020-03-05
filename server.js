@@ -98,7 +98,6 @@ setVolume();
 
 //Wenn Playlist fertig ist
 player.on('playlist-finish', () => {
-    console.log("playlist finished");
 
     //Position zuruecksetzen
     data["position"] = -1;
@@ -108,6 +107,7 @@ player.on('playlist-finish', () => {
 
     //Countdown starten
     if (!countdownID) {
+        console.log("playlist finished");
         startCountdown();
     }
 
@@ -708,9 +708,14 @@ function getMixFiles() {
 
 //Lautstaerke setzen
 function setVolume() {
-    const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
-    console.log(initialVolumeCommand);
-    execSync(initialVolumeCommand);
+    if (configFile["audioOutput"]) {
+        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+        console.log(initialVolumeCommand);
+        execSync(initialVolumeCommand);
+    }
+    else {
+        console.log("no audioOutput configured");
+    }
 }
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
