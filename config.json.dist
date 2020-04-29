@@ -1,7 +1,7 @@
 {
     "user": "pi",
     "audioDir": "/media/usb_audio/Nextcloud/audio/wap/mp3",
-    "jsonDir": "/media/usb_audio/Nextcloud/audio/wap/json/pw"
+    "jsonDir": "/media/usb_audio/Nextcloud/audio/wap/json/pw",
     "audioOutput": "Digital",
     "volume": 80,
     "countdownTime": 300,
