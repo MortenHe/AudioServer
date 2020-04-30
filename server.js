@@ -618,7 +618,7 @@ function sendClientInfo(messageArr) {
 function getMainJSON() {
 
     //In Audiolist sind Infos ueber Modes und Filter
-    const jsonObj = fs.readJSONSync(configFile["jsonDir"] + "/audioList.json");
+    const jsonObj = fs.readJSONSync(configFile["jsonDir"] + "/audiolist.json");
 
     //Array, damit auslesen der einzelnen Unter-JSONs (bibi-tina.json, bobo.json) parallel erfolgen kann
     let modeDataFileArr = [];
