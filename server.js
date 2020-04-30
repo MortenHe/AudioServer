@@ -84,7 +84,7 @@ getMixFiles();
 
 //Auswaehlbar mp3 Dateien fuer MIX ermitteln, Dateien aus Joker und Mix-Ordner nicht anbieten
 //TODO JOKER
-const mp3Files = glob.sync(audioDir + "/../{wap,shp}/**/*.mp3", { "ignore": [mixDir + "/*.mp3", audioDir + "/hsp/misc/joker/*.mp3"] })
+const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [mixDir + "/*.mp3", audioDir + "/hsp/misc/joker/*.mp3"] })
 const searchFiles = mp3Files.map(filePath => {
     return {
         "path": filePath,
