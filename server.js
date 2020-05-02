@@ -28,12 +28,10 @@ console.log("audio files are located in " + audioDir.yellow);
 fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/AudioServer/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
-//TODO
-const jokerFolder = audioDir + "/hsp/misc/joker";
+const jokerFolder = configFile["jokerDir"];
 
-//Wo liegen die Mix-Files
-//TODO
-const mixDir = audioDir + "/kindermusik/misc/mix"
+//Wo liegen die Mix-Files?
+const mixDir = configFile["mixDir"];
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -83,8 +81,7 @@ getMainJSON();
 getMixFiles();
 
 //Auswaehlbar mp3 Dateien fuer MIX ermitteln, Dateien aus Joker und Mix-Ordner nicht anbieten
-//TODO JOKER
-const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [mixDir + "/*.mp3", audioDir + "/hsp/misc/joker/*.mp3"] })
+const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [mixDir + "/../mix-*/*.mp3", jokerDir + "/../joker-*/*.mp3"] })
 const searchFiles = mp3Files.map(filePath => {
     return {
         "path": filePath,

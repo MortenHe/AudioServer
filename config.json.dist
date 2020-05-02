@@ -2,6 +2,8 @@
     "user": "pi",
     "audioDir": "/media/usb_audio/Nextcloud/audio/wap/mp3",
     "jsonDir": "/media/usb_audio/Nextcloud/audio/wap/json/pw",
+    "jokerDir": "/media/usb_audio/Nextcloud/audio/wap/mp3/hsp/misc/joker-###",
+    "mixDir": "/media/usb_audio/Nextcloud/audio/wap/mp3/kindermusik/misc/mix-###",
     "audioOutput": "Digital",
     "volume": 80,
     "countdownTime": 300,
