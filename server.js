@@ -28,7 +28,7 @@ console.log("audio files are located in " + audioDir.yellow);
 fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/AudioServer/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
-const jokerFolder = configFile["jokerDir"];
+const jokerDir = configFile["jokerDir"];
 
 //Wo liegen die Mix-Files?
 const mixDir = configFile["mixDir"];
@@ -399,25 +399,25 @@ wss.on('connection', function connection(ws) {
                 let wantedJokerFolder = audioDir + "/" + value;
 
                 //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
-                if (data["playlist"] === jokerFolder) {
+                if (data["playlist"] === jokerDir) {
                     console.log("stop joker folder playback");
                     player.stop();
                 }
 
                 //Joker Verzeichnis leeren
-                console.log("empty joker dir " + jokerFolder);
-                fs.emptyDirSync(jokerFolder);
+                console.log("empty joker dir " + jokerDir);
+                fs.emptyDirSync(jokerDir);
 
                 //Neuen Dateien dorthin kopieren
-                console.log("copy files from " + wantedJokerFolder + " to joker folder " + jokerFolder);
-                fs.copySync(wantedJokerFolder, jokerFolder);
+                console.log("copy files from " + wantedJokerFolder + " to joker folder " + jokerDir);
+                fs.copySync(wantedJokerFolder, jokerDir);
 
                 //Lock wieder oeffnen nach Kopiervorgang und Benutzer informieren
                 data["jokerLock"] = false;
                 messageArr.push("jokerLock");
 
                 //Joker-Folder lief gerade noch -> wieder starten mit neuen Dateien
-                if (data["playlist"] === jokerFolder) {
+                if (data["playlist"] === jokerDir) {
                     console.log("start joker folder with new tracks");
 
                     //Info an Clients ueber neue Files
