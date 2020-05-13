@@ -8,8 +8,9 @@
     "glob": "^7.1.6",
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
+    "slash": "^3.0.0",
     "timelite": "1.0.0",
-    "underscore": "^1.9.2",
+    "underscore": "^1.10.2",
     "ws": "^6.1.3"
   }
 }

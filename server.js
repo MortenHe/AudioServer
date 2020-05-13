@@ -8,10 +8,11 @@ const timelite = require('timelite');
 
 //Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
+const slash = require('slash');
 const glob = require("glob");
 const _ = require("underscore");
 const fs = require('fs-extra');
-var shuffle = require('shuffle-array');
+const shuffle = require('shuffle-array');
 const colors = require('colors');
 const { execSync } = require('child_process');
 
@@ -19,19 +20,23 @@ const { execSync } = require('child_process');
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
 
+//Bei Windwos aktuelles Verzeichnis mit Forward-Slashes, damit mplayer loadlist funktioniert
+let dirname = __dirname;
+console.log(dirname)
+if (process.platform === "win32") {
+    dirname = slash(dirname);
+}
+
 //Aus Config auslesen wo die Audio-Dateien liegen
-const configFile = fs.readJsonSync(__dirname + '/config.json');
+const configFile = fs.readJsonSync(dirname + '/config.json');
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
 //Befehl fuer Autostart in Datei schreiben
-fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/AudioServer/startnode.sh");
+fs.writeFile(configFile["wssInstallDir"] + "/last-player", "AUTOSTART=sudo " + dirname + "/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
 const jokerDir = configFile["jokerDir"];
-
-//Wo liegen die Mix-Files?
-const mixDir = configFile["mixDir"];
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -40,7 +45,7 @@ var countdownID = null;
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
-    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/button.js"]);
+    const buttons_gpio = spawn("node", [dirname + "/../WSGpioButtons/button.js"]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
     });
@@ -49,7 +54,7 @@ if (configFile.GPIOButtons) {
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
     console.log("Use USB RFID Reader");
-    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/rfid.js"]);
+    const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js"]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
     });
@@ -74,6 +79,9 @@ data["jokerLock"] = false;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
 
+//Wo liegen die Mix-Files?
+data["mixDir"] = configFile["mixDir"];
+
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
 getMainJSON();
 
@@ -81,7 +89,7 @@ getMainJSON();
 getMixFiles();
 
 //Auswaehlbar mp3 Dateien fuer MIX ermitteln, Dateien aus Joker und Mix-Ordner nicht anbieten
-const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [mixDir + "/../mix-*/*.mp3", jokerDir + "/../joker-*/*.mp3"] })
+const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [data["mixDir"] + "/../mix-*/*.mp3", jokerDir + "/../joker-*/*.mp3"] })
 const searchFiles = mp3Files.map(filePath => {
     return {
         "path": filePath,
@@ -142,9 +150,9 @@ player.on('track-change', () => {
 });
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
-if (fs.existsSync(__dirname + "/lastSession.json")) {
+if (fs.existsSync(dirname + "/lastSession.json")) {
     try {
-        const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
+        const lastSessionObj = fs.readJsonSync(dirname + "/lastSession.json");
         data["playlist"] = lastSessionObj.path;
         console.log("load playlist from last session " + data["playlist"]);
 
@@ -282,7 +290,7 @@ wss.on('connection', function connection(ws) {
                 //Wenn Playlist schon fertig ist, wieder von vorne beginnen, Playlist laden und starten
                 if (data["position"] === -1) {
                     data["position"] = 0;
-                    player.exec("loadlist " + __dirname + "/playlist.txt");
+                    player.exec("loadlist " + dirname + "/playlist.txt");
                 }
 
                 //Wie viele Schritte in welche Richtung springen?
@@ -339,7 +347,7 @@ wss.on('connection', function connection(ws) {
                 //Playlist ist schon vorbei -> wieder von vorne beginnen, Playlist laden und starten
                 else {
                     data["position"] = 0;
-                    player.exec("loadlist " + __dirname + "/playlist.txt");
+                    player.exec("loadlist " + dirname + "/playlist.txt");
 
                     //Countdown abbrechen
                     resetCountdown();
@@ -432,7 +440,7 @@ wss.on('connection', function connection(ws) {
             case "update-mix-folder":
 
                 //Mix-Folder laueft gerade -> Playback stoppen
-                if (data["playlist"] === mixDir) {
+                if (data["playlist"] === data["mixDir"]) {
                     console.log("stop mix folder playback");
                     player.stop();
                 }
@@ -466,7 +474,7 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("mixFiles");
 
                 //Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
-                if (data["playlist"] === mixDir) {
+                if (data["playlist"] === data["mixDir"]) {
                     console.log("start mix folder with new tracks");
 
                     //Info an Clients ueber neue Files
@@ -488,7 +496,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixFiles", "searchFiles", "mainJSON"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -557,10 +565,10 @@ function setPlaylist(reloadSession) {
         }
 
         //Playlist-Datei schreiben (1 Zeile pro item)
-        fs.writeFileSync(__dirname + "/playlist.txt", data["files"].join("\n"));
+        fs.writeFileSync(dirname + "/playlist.txt", data["files"].join("\n"));
 
         //Playlist-Datei laden und starten
-        player.exec("loadlist " + __dirname + "/playlist.txt");
+        player.exec("loadlist " + dirname + "/playlist.txt");
 
         //Wenn die Daten aus einer alten Session kommen
         if (reloadSession) {
@@ -580,7 +588,7 @@ function setPlaylist(reloadSession) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-    fs.writeJsonSync(__dirname + "/lastSession.json", {
+    fs.writeJsonSync(dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
@@ -696,7 +704,7 @@ function getMainJSON() {
 
 //Aktuelle Dateien aus Mix-Ordner holen
 function getMixFiles() {
-    const mixFolderFiles = glob.sync(mixDir + "/*.mp3")
+    const mixFolderFiles = glob.sync(data["mixDir"] + "/*.mp3")
     data["mixFiles"] = mixFolderFiles.map(path => {
         return {
             "type": "old",
