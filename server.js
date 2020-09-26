@@ -552,8 +552,8 @@ function setPlaylist(reloadSession) {
         //Ueber Dateien in aktuellem Verzeichnis gehen
         fs.readdirSync(data["playlist"]).forEach(file => {
 
-            //mp3 (audio) files sammeln
-            if ([".mp3"].includes(path.extname(file).toLowerCase())) {
+            //mp3 (audio) files sammeln, die nicht inaktiv sind (inaktive beginnen mit - => -Pumuckl - Die Bergtour)
+            if ([".mp3"].includes(path.extname(file).toLowerCase()) && !file.startsWith("-")) {
                 console.log("add file " + file);
                 data["files"].push(data["playlist"] + "/" + file);
             }
