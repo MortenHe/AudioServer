@@ -85,6 +85,13 @@ data["mixDir"] = configFile["mixDir"];
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
 getMainJSON();
 
+//JSON nach x Sekunden nochmal laden, damit Aenderungen von Nextcloud Sync sichtbar werden (neue Playlists)
+setTimeout(() => {
+    console.log("reload main json".blue);
+    getMainJSON();
+    sendClientInfo(["mainJSON"]);
+}, 20000);
+
 //Aktuellen Inhalt des MixFolders holen
 getMixFiles();
 

@@ -10,7 +10,7 @@
     "shuffle-array": "^1.0.1",
     "slash": "^3.0.0",
     "timelite": "1.0.0",
-    "underscore": "^1.10.2",
+    "underscore": "^1.11.0",
     "ws": "^7.3.1"
   }
 }
