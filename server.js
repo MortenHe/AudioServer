@@ -95,8 +95,28 @@ setTimeout(() => {
 //Aktuellen Inhalt des MixFolders holen
 getMixFiles();
 
-//Auswaehlbar mp3 Dateien fuer MIX ermitteln, Dateien aus Joker und Mix-Ordner nicht anbieten
-const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", { "ignore": [data["mixDir"] + "/../mix-*/*.mp3", jokerDir + "/../joker-*/*.mp3"] })
+//Dateien aus Joker und Mix-Ordner nicht anbieten bei Suche (wegen Doppelung)
+let ignoreFolders = [];
+
+//Mix-Files werden ignoriert
+const mixDirFolders = glob.sync(data["mixDir"] + "/../mix-*", { nodir: true });
+for (let mixDirFolder of mixDirFolders) {
+    ignoreFolders.push(mixDirFolder + "/*.mp3");
+}
+
+//Joker-Files werden ignoriert
+const jokerDirFolders = glob.sync(audioDir + "/**/*joker*")
+for (let jokerDirFolder of jokerDirFolders) {
+    ignoreFolders.push(jokerDirFolder + "/*.mp3")
+}
+
+//Auswaehlbar mp3 Dateien fuer MIX ermitteln
+const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", {
+    "nodir": true,
+    "ignore": ignoreFolders
+});
+
+//Liste der durchsuchbaren mp3-Files erstellen
 const searchFiles = mp3Files.map(filePath => {
     return {
         "path": filePath,
