@@ -95,7 +95,8 @@ setTimeout(() => {
 //Aktuellen Inhalt des MixFolders holen
 getMixFiles();
 
-//Dateien aus Joker und Mix-Ordner nicht anbieten bei Suche (wegen Doppelung)
+//Files fuer Suche ermitteln: Dateien aus Joker und Mix-Ordner nicht anbieten bei Suche (wegen Doppelung)
+console.log("get search files");
 let ignoreFolders = [];
 
 //Mix-Files werden ignoriert
@@ -127,6 +128,7 @@ const searchFiles = mp3Files.map(filePath => {
 
 //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
 data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
+console.log("get search files done");
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -648,6 +650,7 @@ function sendClientInfo(messageArr) {
 
 //JSON fuer Oberflaeche berechnen mit aktiven Foldern, Filtern,...
 function getMainJSON() {
+    console.log("get main json");
 
     //In Audiolist sind Infos ueber Modes und Filter
     const jsonObj = fs.readJSONSync(configFile["jsonDir"] + "/audiolist.json");
@@ -727,10 +730,12 @@ function getMainJSON() {
 
     //Wert merken, damit er an Clients uebergeben werden kann
     data["mainJSON"] = jsonObj;
+    console.log("get main json done");
 }
 
 //Aktuelle Dateien aus Mix-Ordner holen
 function getMixFiles() {
+    console.log("get files from mix folder");
     const mixFolderFiles = glob.sync(data["mixDir"] + "/*.mp3")
     data["mixFiles"] = mixFolderFiles.map(path => {
         return {
@@ -738,6 +743,7 @@ function getMixFiles() {
             "path": path
         }
     });
+    console.log("get files from mix folder done");
 }
 
 //Lautstaerke setzen
