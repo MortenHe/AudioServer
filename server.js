@@ -95,40 +95,8 @@ setTimeout(() => {
 //Aktuellen Inhalt des MixFolders holen
 getMixFiles();
 
-//Files fuer Suche ermitteln: Dateien aus Joker und Mix-Ordner nicht anbieten bei Suche (wegen Doppelung)
-console.log("get search files");
-let ignoreFolders = [];
-
-//Mix-Files werden ignoriert
-const mixDirFolders = glob.sync(data["mixDir"] + "/../mix-*", { nodir: true });
-for (let mixDirFolder of mixDirFolders) {
-    ignoreFolders.push(mixDirFolder + "/*.mp3");
-}
-
-//Joker-Files werden ignoriert
-const jokerDirFolders = glob.sync(audioDir + "/**/*joker*")
-for (let jokerDirFolder of jokerDirFolders) {
-    ignoreFolders.push(jokerDirFolder + "/*.mp3")
-}
-
-//Auswaehlbar mp3 Dateien fuer MIX ermitteln
-const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", {
-    "nodir": true,
-    "ignore": ignoreFolders
-});
-
-//Liste der durchsuchbaren mp3-Files erstellen
-const searchFiles = mp3Files.map(filePath => {
-    return {
-        "path": filePath,
-        "name": path.basename(filePath, '.mp3'),
-        "date": fs.statSync(filePath).birthtime
-    }
-});
-
-//Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
-data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
-console.log("get search files done");
+//Files fuer Suche ermitteln
+getSearchFiles();
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -650,7 +618,6 @@ function sendClientInfo(messageArr) {
 
 //JSON fuer Oberflaeche berechnen mit aktiven Foldern, Filtern,...
 function getMainJSON() {
-    console.log("get main json");
 
     //In Audiolist sind Infos ueber Modes und Filter
     const jsonObj = fs.readJSONSync(configFile["jsonDir"] + "/audiolist.json");
@@ -730,12 +697,10 @@ function getMainJSON() {
 
     //Wert merken, damit er an Clients uebergeben werden kann
     data["mainJSON"] = jsonObj;
-    console.log("get main json done");
 }
 
 //Aktuelle Dateien aus Mix-Ordner holen
 function getMixFiles() {
-    console.log("get files from mix folder");
     const mixFolderFiles = glob.sync(data["mixDir"] + "/*.mp3")
     data["mixFiles"] = mixFolderFiles.map(path => {
         return {
@@ -743,7 +708,47 @@ function getMixFiles() {
             "path": path
         }
     });
-    console.log("get files from mix folder done");
+}
+
+//Dateien fuer Mix-Suche ermitteln
+function getSearchFiles() {
+    let ignoreFolders = [];
+
+    console.log("ignore mix")
+    //Mix-Files werden ignoriert
+    const mixDirFolders = glob.sync(data["mixDir"] + "/../mix-*", { nodir: true });
+    for (let mixDirFolder of mixDirFolders) {
+        ignoreFolders.push(mixDirFolder + "/*.mp3");
+    }
+
+    console.log("ignore joker")
+    //Joker-Files werden ignoriert
+    const jokerDirFolders = glob.sync(audioDir + "/**/*joker*")
+    for (let jokerDirFolder of jokerDirFolders) {
+        ignoreFolders.push(jokerDirFolder + "/*.mp3")
+    }
+
+    console.log("files with ignore")
+    //Auswaehlbar mp3 Dateien fuer MIX ermitteln
+    const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", {
+        "nodir": true,
+        "ignore": ignoreFolders
+    });
+
+    console.log("file date")
+    //Liste der durchsuchbaren mp3-Files erstellen
+    const searchFiles = mp3Files.map(filePath => {
+        return {
+            "path": filePath,
+            "name": path.basename(filePath, '.mp3'),
+            "date": fs.statSync(filePath).birthtime
+        }
+    });
+
+    console.log("reverse")
+    //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
+    data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
+    console.log("done")
 }
 
 //Lautstaerke setzen
