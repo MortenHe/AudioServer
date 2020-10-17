@@ -92,12 +92,6 @@ setTimeout(() => {
     sendClientInfo(["mainJSON"]);
 }, 20000);
 
-//Aktuellen Inhalt des MixFolders holen
-getMixFiles();
-
-//Files fuer Suche ermitteln
-getSearchFiles();
-
 //initiale Lautstaerke setzen
 setVolume();
 
@@ -169,6 +163,12 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
 
 //TimeFunktion starten, die aktuelle Laufzeit des Titels liefert
 startTimer();
+
+//Aktuellen Inhalt des MixFolders holen
+getMixFiles();
+
+//Files fuer Suche ermitteln
+getSearchFiles();
 
 //Wenn sich ein WebSocket mit dem WebSocketServer verbindet
 wss.on('connection', function connection(ws) {
