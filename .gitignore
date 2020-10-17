@@ -1,6 +1,5 @@
 /node_modules
 lastSession.json
-/package-lock.json
 .vscode
 playlist.txt
 config.json
