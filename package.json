@@ -6,6 +6,7 @@
     "colors": "^1.4.0",
     "fs-extra": "^9.0.1",
     "glob": "^7.1.6",
+    "glob-promise": "^3.4.0",
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
     "slash": "^3.0.0",

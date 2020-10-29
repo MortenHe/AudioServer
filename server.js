@@ -9,12 +9,12 @@ const timelite = require('timelite');
 //Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
 const slash = require('slash');
-const glob = require("glob");
+const glob = require("glob-promise");
 const _ = require("underscore");
 const fs = require('fs-extra');
 const shuffle = require('shuffle-array');
 const colors = require('colors');
-const { execSync } = require('child_process');
+const exec = require('child_process').exec;
 
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
@@ -468,7 +468,6 @@ wss.on('connection', function connection(ws) {
 
                 //Aktualisierten Inhalt des Mix-Folders ermitteln und an Clients melden
                 getMixFiles();
-                messageArr.push("mixFiles");
 
                 //Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
                 if (data["playlist"] === data["mixDir"]) {
@@ -699,14 +698,16 @@ function getMainJSON() {
     data["mainJSON"] = jsonObj;
 }
 
-//Aktuelle Dateien aus Mix-Ordner holen
+//Aktuelle Dateien aus Mix-Ordner holen und an Clients schicken
 function getMixFiles() {
-    const mixFolderFiles = glob.sync(data["mixDir"] + "/*.mp3")
-    data["mixFiles"] = mixFolderFiles.map(path => {
-        return {
-            "type": "old",
-            "path": path
-        }
+    glob.promise(data["mixDir"] + "/*.mp3").then((files) => {
+        data["mixFiles"] = files.map(path => {
+            return {
+                "type": "old",
+                "path": path
+            }
+        });
+        sendClientInfo(["mixFiles"]);
     });
 }
 
@@ -714,49 +715,57 @@ function getMixFiles() {
 function getSearchFiles() {
     let ignoreFolders = [];
 
-    console.log("ignore mix")
     //Mix-Files werden ignoriert
-    const mixDirFolders = glob.sync(data["mixDir"] + "/../mix-*", { nodir: true });
-    for (let mixDirFolder of mixDirFolders) {
-        ignoreFolders.push(mixDirFolder + "/*.mp3");
-    }
-
-    console.log("ignore joker")
-    //Joker-Files werden ignoriert
-    const jokerDirFolders = glob.sync(audioDir + "/**/*joker*")
-    for (let jokerDirFolder of jokerDirFolders) {
-        ignoreFolders.push(jokerDirFolder + "/*.mp3")
-    }
-
-    console.log("files with ignore")
-    //Auswaehlbar mp3 Dateien fuer MIX ermitteln
-    const mp3Files = glob.sync(audioDir + "/../../{wap,shp}/**/*.mp3", {
-        "nodir": true,
-        "ignore": ignoreFolders
-    });
-
-    console.log("file date")
-    //Liste der durchsuchbaren mp3-Files erstellen
-    const searchFiles = mp3Files.map(filePath => {
-        return {
-            "path": filePath,
-            "name": path.basename(filePath, '.mp3'),
-            "date": fs.statSync(filePath).birthtime
+    console.log("ignore mix");
+    mixPromise = glob.promise(data["mixDir"] + "/../mix-*", { nodir: true }).then((mixDirFolders) => {
+        for (let mixDirFolder of mixDirFolders) {
+            ignoreFolders.push(mixDirFolder + "/*.mp3");
         }
     });
 
-    console.log("reverse")
-    //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
-    data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
-    console.log("done")
+
+
+    //Joker-Files werden ignoriert
+    console.log("ignore joker");
+    jokerPromise = glob.promise(audioDir + "/**/*joker*").then((jokerDirFolders) => {
+        for (let jokerDirFolder of jokerDirFolders) {
+            ignoreFolders.push(jokerDirFolder + "/*.mp3")
+        }
+    });
+
+    //Warten bis beide Promises abgeschlossen sind
+    Promise.all([mixPromise, jokerPromise]).then(() => {
+        glob.promise(audioDir + "/../../{wap,shp}/**/*.mp3", {
+            "nodir": true,
+            "ignore": ignoreFolders
+        }).then((mp3Files) => {
+
+            //Erstellungsdatum fuer Sortierung ermitteln
+            console.log("file date")
+            const searchFiles = mp3Files.map(filePath => {
+                return {
+                    "path": filePath,
+                    "name": path.basename(filePath, '.mp3'),
+                    "date": fs.statSync(filePath).birthtime
+                }
+            });
+
+            //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
+            console.log("reverse")
+            data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
+
+            console.log("done")
+            sendClientInfo(["searchFiles"]);
+        });
+    });
 }
 
 //Lautstaerke setzen
 function setVolume() {
     if (configFile["audioOutput"]) {
-        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + data["volume"] + "% -M";
         console.log(initialVolumeCommand);
-        execSync(initialVolumeCommand);
+        exec(initialVolumeCommand);
     }
     else {
         console.log("no audioOutput configured");
