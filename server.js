@@ -816,5 +816,5 @@ function shutdown() {
     sendClientInfo(["shutdown"]);
 
     //Pi herunterfahren
-    execSync("shutdown -h now");
+    exec("shutdown -h now");
 }
