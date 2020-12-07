@@ -261,9 +261,9 @@ wss.on('connection', function connection(ws) {
 
                     //wir sind beim 1. Titel
                     else {
-                        console.log("1. Titel von vorne");
 
                         //Playlist nochmal von vorne starten
+                        console.log("1. Titel von vorne");
                         player.seekPercent(0);
 
                         //Wenn Titel pausiert war, wieder unpausen
@@ -401,28 +401,33 @@ wss.on('connection', function connection(ws) {
                 sendClientInfo(["jokerLock"]);
 
                 //Aus welchem Ordner kommt der Joker-Inhalt
-                let wantedJokerFolder = audioDir + "/" + value;
+                const wantedJokerFolder = audioDir + "/" + value.wantedJokerFolder;
+
+                //Falls es fuer diese Hoespiel-Serie einen Joker-Ordner gibt (z.B. 00-pumuckl-joker), diesen verwenden, ansonsten allgemeinen Joker-Ordner (z.B. joker-luis)
+                const modeJokerFolder = audioDir + "/" + value.mode + "/" + value.folder + "/" + "00-" + value.folder + "-joker";
+                const usedJokerDir = fs.existsSync(modeJokerFolder) ? modeJokerFolder : jokerDir;
+                console.log("use joker folder " + usedJokerDir);
 
                 //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
-                if (data["playlist"] === jokerDir) {
+                if (data["playlist"] === usedJokerDir) {
                     console.log("stop joker folder playback");
                     player.stop();
                 }
 
                 //Joker Verzeichnis leeren
-                console.log("empty joker dir " + jokerDir);
-                fs.emptyDirSync(jokerDir);
+                console.log("empty joker dir " + usedJokerDir);
+                fs.emptyDirSync(usedJokerDir);
 
                 //Neuen Dateien dorthin kopieren
-                console.log("copy files from " + wantedJokerFolder + " to joker folder " + jokerDir);
-                fs.copySync(wantedJokerFolder, jokerDir);
+                console.log("copy files from " + wantedJokerFolder + " to joker folder " + usedJokerDir);
+                fs.copySync(wantedJokerFolder, usedJokerDir);
 
                 //Lock wieder oeffnen nach Kopiervorgang und Benutzer informieren
                 data["jokerLock"] = false;
                 messageArr.push("jokerLock");
 
                 //Joker-Folder lief gerade noch -> wieder starten mit neuen Dateien
-                if (data["playlist"] === jokerDir) {
+                if (data["playlist"] === usedJokerDir) {
                     console.log("start joker folder with new tracks");
 
                     //Info an Clients ueber neue Files
@@ -550,7 +555,7 @@ function setPlaylist(reloadSession) {
 
             //mp3 (audio) files sammeln, die nicht inaktiv sind (inaktive beginnen mit - => -Pumuckl - Die Bergtour)
             if ([".mp3"].includes(path.extname(file).toLowerCase()) && !file.startsWith("-")) {
-                console.log("add file " + file);
+                //console.log("add file " + file);
                 data["files"].push(data["playlist"] + "/" + file);
             }
         });
@@ -713,10 +718,11 @@ function getMixFiles() {
 
 //Dateien fuer Mix-Suche ermitteln
 function getSearchFiles() {
+    console.log("create mix files");
     let ignoreFolders = [];
 
     //Mix-Files werden ignoriert
-    console.log("ignore mix");
+
     mixPromise = glob.promise(data["mixDir"] + "/../mix-*", { nodir: true }).then((mixDirFolders) => {
         for (let mixDirFolder of mixDirFolders) {
             ignoreFolders.push(mixDirFolder + "/*.mp3");
@@ -726,7 +732,6 @@ function getSearchFiles() {
 
 
     //Joker-Files werden ignoriert
-    console.log("ignore joker");
     jokerPromise = glob.promise(audioDir + "/**/*joker*").then((jokerDirFolders) => {
         for (let jokerDirFolder of jokerDirFolders) {
             ignoreFolders.push(jokerDirFolder + "/*.mp3")
@@ -741,7 +746,6 @@ function getSearchFiles() {
         }).then((mp3Files) => {
 
             //Erstellungsdatum fuer Sortierung ermitteln
-            console.log("file date")
             const searchFiles = mp3Files.map(filePath => {
                 return {
                     "path": filePath,
@@ -751,10 +755,8 @@ function getSearchFiles() {
             });
 
             //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
-            console.log("reverse")
+            console.log("create mix files done");
             data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
-
-            console.log("done")
             sendClientInfo(["searchFiles"]);
         });
     });
