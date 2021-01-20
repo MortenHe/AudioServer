@@ -1,10 +1,10 @@
 {
     "audioDir": "/home/pi/Nextcloud/audio/wap/mp3",
     "jsonDir": "/home/pi/Nextcloud/audio/wap/json/pw",
-    "jokerDir": "/home/pi/Nextcloud/audio/wap/mp3/hsp/misc/joker-###",
-    "mixDir": "/home/pi/Nextcloud/audio/wap/mp3/kindermusik/misc/mix-###",
+    "jokerDir": "/home/pi/Nextcloud/audio/wap/mp3/extra/misc/joker-###",
+    "mixDir": "/home/pi/Nextcloud/audio/wap/mp3/extra/misc/mix-###",
     "wssInstallDir": "/home/pi/wss-install",
-    "audioOutput": "PCM",
+    "audioOutput": "Speaker|Master|Digial|PCM",
     "volume": 80,
     "countdownTime": 300,
     "GPIOButtons": false,

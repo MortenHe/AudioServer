@@ -22,7 +22,6 @@ const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
 
 //Bei Windwos aktuelles Verzeichnis mit Forward-Slashes, damit mplayer loadlist funktioniert
 let dirname = __dirname;
-console.log(dirname)
 if (process.platform === "win32") {
     dirname = slash(dirname);
 }
@@ -231,7 +230,7 @@ wss.on('connection', function connection(ws) {
 
                     //wir sind beim letzten Titel
                     else {
-                        console.log("kein next beim letzten Track");
+                        console.log("no next at last track");
 
                         //Wenn Titel pausiert war, wieder unpausen
                         if (data["paused"]) {
@@ -263,7 +262,7 @@ wss.on('connection', function connection(ws) {
                     else {
 
                         //Playlist nochmal von vorne starten
-                        console.log("1. Titel von vorne");
+                        console.log("first track from start");
                         player.seekPercent(0);
 
                         //Wenn Titel pausiert war, wieder unpausen
@@ -553,9 +552,9 @@ function setPlaylist(reloadSession) {
         //Ueber Dateien in aktuellem Verzeichnis gehen
         fs.readdirSync(data["playlist"]).forEach(file => {
 
-            //mp3 (audio) files sammeln, die nicht inaktiv sind (inaktive beginnen mit - => -Pumuckl - Die Bergtour)
-            if ([".mp3"].includes(path.extname(file).toLowerCase()) && !file.startsWith("-")) {
-                //console.log("add file " + file);
+            //mp3 (audio) files sammeln
+            if ([".mp3"].includes(path.extname(file).toLowerCase())) {
+                console.log("add file " + file);
                 data["files"].push(data["playlist"] + "/" + file);
             }
         });
@@ -719,46 +718,24 @@ function getMixFiles() {
 //Dateien fuer Mix-Suche ermitteln
 function getSearchFiles() {
     console.log("create mix files");
-    let ignoreFolders = [];
-
-    //Mix-Files werden ignoriert
-
-    mixPromise = glob.promise(data["mixDir"] + "/../mix-*", { nodir: true }).then((mixDirFolders) => {
-        for (let mixDirFolder of mixDirFolders) {
-            ignoreFolders.push(mixDirFolder + "/*.mp3");
-        }
-    });
-
-
-
-    //Joker-Files werden ignoriert
-    jokerPromise = glob.promise(audioDir + "/**/*joker*").then((jokerDirFolders) => {
-        for (let jokerDirFolder of jokerDirFolders) {
-            ignoreFolders.push(jokerDirFolder + "/*.mp3")
-        }
-    });
 
     //Warten bis beide Promises abgeschlossen sind
-    Promise.all([mixPromise, jokerPromise]).then(() => {
-        glob.promise(audioDir + "/../../{wap,shp}/**/*.mp3", {
-            "nodir": true,
-            "ignore": ignoreFolders
-        }).then((mp3Files) => {
+    glob.promise(audioDir + "/../../{wap/mp3/cds,wap/mp3/kindermusik,shp}/**/*.mp3", {
+    }).then((mp3Files) => {
 
-            //Erstellungsdatum fuer Sortierung ermitteln
-            const searchFiles = mp3Files.map(filePath => {
-                return {
-                    "path": filePath,
-                    "name": path.basename(filePath, '.mp3'),
-                    "date": fs.statSync(filePath).birthtime
-                }
-            });
-
-            //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
-            console.log("create mix files done");
-            data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
-            sendClientInfo(["searchFiles"]);
+        //Erstellungsdatum fuer Sortierung ermitteln
+        const searchFiles = mp3Files.map(filePath => {
+            return {
+                "path": filePath,
+                "name": path.basename(filePath, '.mp3'),
+                "date": fs.statSync(filePath).birthtime
+            }
         });
+
+        //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
+        console.log("create mix files done");
+        data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
+        sendClientInfo(["searchFiles"]);
     });
 }
 

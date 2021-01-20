@@ -4,7 +4,7 @@
   "description": "socket.io server",
   "dependencies": {
     "colors": "^1.4.0",
-    "fs-extra": "^9.0.1",
+    "fs-extra": "^9.1.0",
     "glob": "^7.1.6",
     "glob-promise": "^3.4.0",
     "mplayer-wrapper": "^1.0.0",
