@@ -7,6 +7,8 @@
     "audioOutput": "Speaker|Master|Digial|PCM",
     "volume": 80,
     "countdownTime": 300,
+    "port": 8080,
     "GPIOButtons": false,
-    "USBRFIDReader": false
+    "USBRFIDReader": false,
+    "STT": false
 }

@@ -16,18 +16,20 @@ const shuffle = require('shuffle-array');
 const colors = require('colors');
 const exec = require('child_process').exec;
 
-//WebSocketServer anlegen und starten
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
-
 //Bei Windwos aktuelles Verzeichnis mit Forward-Slashes, damit mplayer loadlist funktioniert
 let dirname = __dirname;
 if (process.platform === "win32") {
     dirname = slash(dirname);
 }
 
-//Aus Config auslesen wo die Audio-Dateien liegen
+//Config
 const configFile = fs.readJsonSync(dirname + '/config.json');
+
+//WebSocketServer anlegen und starten
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true });
+
+//Wo liegen Audiodateien
 const audioDir = configFile["audioDir"];
 console.log("audio files are located in " + audioDir.yellow);
 
@@ -56,6 +58,17 @@ if (configFile.USBRFIDReader) {
     const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js"]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
+    });
+}
+
+//STT starten, falls konfiguriert
+if (configFile.STT) {
+    console.log("Use Speach to text");
+
+    //JSON-File fuer Indexerzeugung erstellen
+    const tts_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js"]);
+    tts_index.stdout.on('data', (data) => {
+        console.log("tts index event: " + data);
     });
 }
 
@@ -554,7 +567,7 @@ function setPlaylist(reloadSession) {
 
             //mp3 (audio) files sammeln
             if ([".mp3"].includes(path.extname(file).toLowerCase())) {
-                console.log("add file " + file);
+                //console.log("add file " + file);
                 data["files"].push(data["playlist"] + "/" + file);
             }
         });
