@@ -1,9 +1,6 @@
 {
-    "audioDir": "/home/pi/Nextcloud/audio/wap/mp3",
-    "jsonDir": "/home/pi/Nextcloud/audio/wap/json/pw",
-    "jokerDir": "/home/pi/Nextcloud/audio/wap/mp3/extra/misc/joker-###",
-    "mixDir": "/home/pi/Nextcloud/audio/wap/mp3/extra/misc/mix-###",
-    "wssInstallDir": "/home/pi/wss-install",
+    "nextcloudDir": "/home/pi/Nextcloud",
+    "userMode": "pw",
     "audioOutput": "Speaker|Master|Digial|PCM",
     "volume": 80,
     "countdownTime": 300,

@@ -30,14 +30,15 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true });
 
 //Wo liegen Audiodateien
-const audioDir = configFile["audioDir"];
+const nextcloudDir = configFile["nextcloudDir"];
+const audioDir = nextcloudDir + "/audio/wap/mp3";
 console.log("audio files are located in " + audioDir.yellow);
 
 //Befehl fuer Autostart in Datei schreiben
-fs.writeFile(configFile["wssInstallDir"] + "/last-player", "AUTOSTART=sudo " + dirname + "/startnode.sh");
+fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
-const jokerDir = configFile["jokerDir"];
+const jokerDir = nextcloudDir + "/audio/wap/mp3/extra/misc/joker-" + configFile["userMode"];
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -98,7 +99,7 @@ data["mixFiles"] = [];
 data["mainJSON"] = {};
 
 //Wo liegen die Mix-Files?
-data["mixDir"] = configFile["mixDir"];
+data["mixDir"] = nextcloudDir + "/audio/wap/mp3/extra/misc/mix-" + configFile["userMode"];
 
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
 getMainJSON();
@@ -434,7 +435,7 @@ wss.on('connection', function connection(ws) {
                 const wantedJokerFolder = audioDir + "/" + value.wantedJokerFolder;
 
                 //Falls es fuer diese Hoespiel-Serie einen Joker-Ordner gibt (z.B. 00-pumuckl-joker), diesen verwenden, ansonsten allgemeinen Joker-Ordner (z.B. joker-luis)
-                const modeJokerFolder = audioDir + "/" + value.mode + "/" + value.folder + "/" + "00-" + value.folder + "-joker";
+                const modeJokerFolder = audioDir + "/" + value.mode + "/" + value.folder + "/00-" + value.folder + "-joker";
                 const usedJokerDir = fs.existsSync(modeJokerFolder) ? modeJokerFolder : jokerDir;
                 console.log("use joker folder " + usedJokerDir);
 
@@ -657,7 +658,8 @@ function sendClientInfo(messageArr) {
 function getMainJSON() {
 
     //In Audiolist sind Infos ueber Modes und Filter
-    const jsonObj = fs.readJSONSync(configFile["jsonDir"] + "/audiolist.json");
+    const jsonDir = nextcloudDir + "/audio/wap/json/pw";
+    const jsonObj = fs.readJSONSync(jsonDir + "/audiolist.json");
 
     //Array, damit auslesen der einzelnen Unter-JSONs (bibi-tina.json, bobo.json) parallel erfolgen kann
     let modeDataFileArr = [];
@@ -687,7 +689,7 @@ function getMainJSON() {
                 delete jsonObj[mode]["filter"]["filters"][index]["active"];
 
                 //JSON dieses Filters holen (z.B. bibi-tina.json)
-                const jsonLink = configFile["jsonDir"] + "/" + mode + "/" + filterID + ".json";
+                const jsonLink = jsonDir + "/" + mode + "/" + filterID + ".json";
                 modeData = {
                     data: fs.readJSONSync(jsonLink),
                     filterID: filterID,
@@ -753,7 +755,7 @@ function getMixFiles() {
 function getSearchFiles() {
     console.log("create mix files");
 
-    //Warten bis beide Promises abgeschlossen sind
+    //cds, kindermusik und shp komplett anbieten
     glob.promise(audioDir + "/../../{wap/mp3/cds,wap/mp3/kindermusik,shp}/**/*.mp3", {
     }).then((mp3Files) => {
 
