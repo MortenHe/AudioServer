@@ -30,7 +30,7 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true });
 
 //Wo liegen Audiodateien
-const nextcloudDir = configFile["nextcloudDir"];
+const nextcloudDir = configFile.nextcloudDir;
 const audioDir = nextcloudDir + "/audio/wap/mp3";
 console.log("audio files are located in " + audioDir.yellow);
 
@@ -38,7 +38,7 @@ console.log("audio files are located in " + audioDir.yellow);
 fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/startnode.sh");
 
 //Wo liegt der Joker-Ordner?
-const jokerDir = nextcloudDir + "/audio/wap/mp3/extra/misc/joker-" + configFile["userMode"];
+const jokerDir = nextcloudDir + "/audio/wap/mp3/extra/misc/joker-" + configFile.userMode;
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -47,7 +47,7 @@ var countdownID = null;
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
-    const buttons_gpio = spawn("node", [dirname + "/../WSGpioButtons/button.js"]);
+    const buttons_gpio = spawn("node", [dirname + "/../WSGpioButtons/button.js", configFile.port]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
     });
@@ -56,7 +56,7 @@ if (configFile.GPIOButtons) {
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
     console.log("Use USB RFID Reader");
-    const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js"]);
+    const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js", configFile.port]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
     });
@@ -67,13 +67,13 @@ if (configFile.STT) {
     console.log("Use Speach to text");
 
     //JSON-File fuer Indexerzeugung erstellen
-    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js"]);
+    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js", configFile.port]);
     stt_index.stdout.on('data', (data) => {
         console.log("stt index event: " + data);
     });
 
     //STT-Suche
-    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js"]);
+    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", configFile.port]);
     stt_search.stdout.on('data', (data) => {
         console.log("stt search event: " + data);
     });
@@ -81,7 +81,7 @@ if (configFile.STT) {
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
-data["volume"] = configFile["volume"];
+data["volume"] = configFile.volume;
 data["position"] = -1;
 data["files"] = [];
 data["paused"] = false;
@@ -99,7 +99,7 @@ data["mixFiles"] = [];
 data["mainJSON"] = {};
 
 //Wo liegen die Mix-Files?
-data["mixDir"] = nextcloudDir + "/audio/wap/mp3/extra/misc/mix-" + configFile["userMode"];
+data["mixDir"] = nextcloudDir + "/audio/wap/mp3/extra/misc/mix-" + configFile.userMode;
 
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
 getMainJSON();
@@ -548,7 +548,7 @@ function startTimer() {
 
         //Wie viele Sekunden laeuft der Track noch?
         let totalSeconds = data["fileLength"] - data["secondsPlayed"];
-        console.log("track progress " + data["secondsPlayed"] + " - track time left " + totalSeconds);
+        //console.log("track progress " + data["secondsPlayed"] + " - track time left " + totalSeconds);
 
         //Umrechung der Sekunden in [h, m, s] fuer formattierte Darstellung
         let hours = Math.floor(totalSeconds / 3600);
@@ -777,8 +777,8 @@ function getSearchFiles() {
 
 //Lautstaerke setzen
 function setVolume() {
-    if (configFile["audioOutput"]) {
-        const initialVolumeCommand = "amixer sset " + configFile["audioOutput"] + " " + data["volume"] + "% -M";
+    if (configFile.audioOutput) {
+        const initialVolumeCommand = "amixer sset " + configFile.audioOutput + " " + data["volume"] + "% -M";
         console.log(initialVolumeCommand);
         exec(initialVolumeCommand);
     }
