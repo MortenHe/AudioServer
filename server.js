@@ -66,9 +66,15 @@ if (configFile.STT) {
     console.log("Use Speach to text");
 
     //JSON-File fuer Indexerzeugung erstellen
-    const tts_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js"]);
-    tts_index.stdout.on('data', (data) => {
-        console.log("tts index event: " + data);
+    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js"]);
+    stt_index.stdout.on('data', (data) => {
+        console.log("stt index event: " + data);
+    });
+
+    //STT-Suche
+    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js"]);
+    stt_search.stdout.on('data', (data) => {
+        console.log("stt search event: " + data);
     });
 }
 
@@ -329,6 +335,18 @@ wss.on('connection', function connection(ws) {
 
                 //seek in item
                 player.seek(seekTo);
+                break;
+
+            //Pause, wenn Playlist gerade laeuft
+            case 'pause-if-playing':
+
+                //Wenn wir gerade in der Playlist sind und nicht pasuiert ist -> pausieren
+                if (data["position"] !== -1 && !data["paused"]) {
+                    data["paused"] = true;
+                    player.playPause();
+                    messageArr.push("paused");
+                    startCountdown();
+                }
                 break;
 
             //Pause-Status toggeln
@@ -601,6 +619,8 @@ function setPlaylist(reloadSession) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
+    //TODO: check
+    /*
     fs.writeJsonSync(dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
@@ -608,6 +628,7 @@ function writeSessionJson() {
         allowRandom: data["allowRandom"],
         position: data["position"]
     });
+    */
 }
 
 //Infos ans WS-Clients schicken
@@ -755,7 +776,7 @@ function getSearchFiles() {
 //Lautstaerke setzen
 function setVolume() {
     if (configFile["audioOutput"]) {
-        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + data["volume"] + "% -M";
+        const initialVolumeCommand = "amixer sset " + configFile["audioOutput"] + " " + data["volume"] + "% -M";
         console.log(initialVolumeCommand);
         exec(initialVolumeCommand);
     }
@@ -785,7 +806,7 @@ function countdown() {
 
     //Wenn der Countdown noch nicht abgelaufen ist
     if (data["countdownTime"] >= 0) {
-        console.log("shutdown in " + data["countdownTime"] + " seconds");
+        //console.log("shutdown in " + data["countdownTime"] + " seconds");
 
         //Anzahl der Sekunden bis Countdown an Clients schicken
         sendClientInfo(["countdownTime"]);
