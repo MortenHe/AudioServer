@@ -1,4 +1,4 @@
 #!/bin/bash
-#TODO: config
-/usr/bin/sudo /usr/bin/node /home/martin/github/AudioServer/server.js > /home/martin/github/output-server.txt &
-#/usr/bin/sudo /usr/bin/node /home/pi/mh_prog/AudioServer/server.js > /home/pi/mh_prog/output-server.txt &
+#Server-Script liegt im gleichen Verzeichnis wie sh-Script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+/usr/bin/sudo /usr/bin/node "${DIR}/server.js" > "${DIR}/../output-server.txt" &

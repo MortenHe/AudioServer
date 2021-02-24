@@ -1,11 +1,13 @@
 {
-    "nextcloudDir": "/home/pi/Nextcloud",
+    "audioDir": "/home/pi/Nextcloud/audio",
     "userMode": "pw",
+    "shpAudioMode": "kids",
     "audioOutput": "Speaker|Master|Digial|PCM",
     "volume": 80,
     "countdownTime": 300,
     "port": 8080,
     "GPIOButtons": false,
     "USBRFIDReader": false,
+    "USBRFIDReaderInput": "/dev/input/event1",
     "STT": false
 }
