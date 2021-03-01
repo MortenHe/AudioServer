@@ -114,18 +114,20 @@ setTimeout(() => {
 //initiale Lautstaerke setzen
 setVolume();
 
-//Wenn Playlist fertig ist
+//Wenn Playlist fertig ist (wird jede Sekunde aufgerufen)
 player.on('playlist-finish', () => {
 
     //Position zuruecksetzen
     data["position"] = -1;
 
-    //Info in JSON schreiben, dass Playlist vorbei ist
-    writeSessionJson();
-
-    //Countdown starten
+    //Wenn Countdown noch nicht laueft
     if (!countdownID) {
         console.log("playlist finished");
+
+        //Info in JSON-Datei schreiben (position: -1)
+        writeSessionJson();
+
+        //Countdown starten
         startCountdown();
     }
 
