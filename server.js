@@ -620,8 +620,6 @@ function setPlaylist(reloadSession) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-    //TODO: check
-    /*
     fs.writeJsonSync(dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
@@ -629,7 +627,6 @@ function writeSessionJson() {
         allowRandom: data["allowRandom"],
         position: data["position"]
     });
-    */
 }
 
 //Infos ans WS-Clients schicken
