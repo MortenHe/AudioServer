@@ -2,7 +2,7 @@
     "audioDir": "/home/pi/Nextcloud/audio",
     "userMode": "pw",
     "shpAudioMode": "kids",
-    "audioOutput": "Speaker|Master|Digial|PCM",
+    "audioOutput": "HDMI|Speaker|Master|Digial|PCM",
     "volume": 80,
     "countdownTime": 300,
     "port": 8080,
