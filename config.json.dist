@@ -8,6 +8,6 @@
     "port": 8080,
     "GPIOButtons": false,
     "USBRFIDReader": false,
-    "USBRFIDReaderInput": "/dev/input/event1",
+    "USBRFIDReaderInput": "/dev/input/event0",
     "STT": false
 }
