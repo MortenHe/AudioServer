@@ -9,5 +9,6 @@
     "GPIOButtons": false,
     "USBRFIDReader": false,
     "USBRFIDReaderInput": "/dev/input/event0",
-    "STT": false
+    "STT": false,
+    "STTDevice": "hw:1,0"
 }
