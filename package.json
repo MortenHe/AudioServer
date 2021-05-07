@@ -11,7 +11,7 @@
     "shuffle-array": "^1.0.1",
     "slash": "^3.0.0",
     "timelite": "1.0.0",
-    "underscore": "^1.12.0",
+    "underscore": "^1.12.1",
     "ws": "^7.4.2"
   },
   "license": "GPL-3.0-or-later",
