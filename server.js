@@ -37,9 +37,6 @@ console.log("audio files are located in " + audioFilesDir.yellow);
 //Befehl fuer Autostart in Datei schreiben
 fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/startnode.sh");
 
-//Wo liegt der Joker-Ordner?
-const jokerDir = audioFilesDir + "/extra/misc/joker-" + configFile.userMode;
-
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
 var countdownID = null;
@@ -95,11 +92,15 @@ data["secondsPlayed"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
 data["jokerLock"] = false;
+data["userMode"] = configFile.userMode;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
 
+//Wo liegt der Joker-Ordner?
+setJokerDir();
+
 //Wo liegen die Mix-Files?
-data["mixDir"] = audioFilesDir + "/extra/misc/mix-" + configFile.userMode;
+setMixDir();
 
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
 getMainJSON();
@@ -438,7 +439,7 @@ wss.on('connection', function connection(ws) {
 
                 //Falls es fuer diese Hoespiel-Serie einen Joker-Ordner gibt (z.B. 00-pumuckl-joker), diesen verwenden, ansonsten allgemeinen Joker-Ordner (z.B. joker-luis)
                 const modeJokerFolder = audioFilesDir + "/" + value.mode + "/" + value.folder + "/00-" + value.folder + "-joker";
-                const usedJokerDir = fs.existsSync(modeJokerFolder) ? modeJokerFolder : jokerDir;
+                const usedJokerDir = fs.existsSync(modeJokerFolder) ? modeJokerFolder : data["jokerDir"];
                 console.log("use joker folder " + usedJokerDir);
 
                 //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
@@ -519,6 +520,15 @@ wss.on('connection', function connection(ws) {
                 }
                 break;
 
+            //userMode setzen fuer neue Joker-Dir und Mix-Files Dir
+            case "set-user-mode":
+                data["userMode"] = value;
+                setJokerDir();
+                setMixDir();
+                messageArr.push("userMode", "mixDir");
+                getMixFiles();
+                break;
+
             //System herunterfahren
             case "shutdown":
                 shutdown();
@@ -530,7 +540,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -820,6 +830,16 @@ function countdown() {
     else {
         shutdown();
     }
+}
+
+//Joker-Ordner setzen
+function setJokerDir() {
+    data["jokerDir"] = audioFilesDir + "/extra/misc/joker-" + data["userMode"];
+}
+
+//MixFiles-Ordner setzen
+function setMixDir() {
+    data["mixDir"] = audioFilesDir + "/extra/misc/mix-" + data["userMode"];
 }
 
 //Pi herunterfahren
