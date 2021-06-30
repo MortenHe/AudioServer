@@ -8,7 +8,6 @@ const timelite = require('timelite');
 
 //Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
-const slash = require('slash');
 const glob = require("glob-promise");
 const _ = require("underscore");
 const fs = require('fs-extra');
@@ -16,11 +15,8 @@ const shuffle = require('shuffle-array');
 const colors = require('colors');
 const exec = require('child_process').exec;
 
-//Bei Windwos aktuelles Verzeichnis mit Forward-Slashes, damit mplayer loadlist funktioniert
+//Skript-Verzeichnis
 let dirname = __dirname;
-if (process.platform === "win32") {
-    dirname = slash(dirname);
-}
 
 //Config
 const configFile = fs.readJsonSync(dirname + '/config.json');
