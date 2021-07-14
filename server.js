@@ -89,6 +89,7 @@ data["time"] = 0;
 data["countdownTime"] = -1;
 data["jokerLock"] = false;
 data["userMode"] = configFile.userMode;
+data["pageTitle"] = configFile.userMode;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
 
@@ -536,7 +537,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
