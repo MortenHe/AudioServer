@@ -670,7 +670,7 @@ function getMainJSON() {
     //Array, damit auslesen der einzelnen Unter-JSONs (bibi-tina.json, bobo.json) parallel erfolgen kann
     let modeDataFileArr = [];
 
-    //Ueber Modes gehen (hsp, kindermusik, musikmh)
+    //Ueber Modes gehen (hsp, kindermusik, cds, extra)
     for (let [mode, modeData] of Object.entries(jsonObj)) {
 
         //merken, welche Filter geloescht werden sollen
@@ -717,28 +717,26 @@ function getMainJSON() {
             let filterIndex = jsonObj[mode]["filter"]["filters"].indexOf(filter);
             jsonObj[mode]["filter"]["filters"].splice(filterIndex, 1);
         });
-
-        //Ueber die Treffer (JSON-files) gehen
-        modeDataFileArr.forEach(result => {
-
-            //Ueber Daten (z.B. einzelne Audio-Playlists) gehen
-            result["data"].forEach(modeItem => {
-
-                //Wenn Playlist aktiv ist
-                if (modeItem["active"]) {
-
-                    //Feld "active" loeschen
-                    delete modeItem["active"];
-
-                    //Modus einfuegen (damit Filterung in Oberflaeche geht)
-                    modeItem["mode"] = result["filterID"];
-
-                    //Playlist-Objekt in Ausgabe Objekt einfuegen
-                    jsonObj[result["mode"]]["items"].push(modeItem);
-                }
-            });
-        });
     }
+
+    //Ueber die Treffer (JSON-files) gehen
+    modeDataFileArr.forEach(result => {
+
+        //Ueber Daten (z.B. einzelne Audio-Playlists) gehen
+        result["data"].forEach(modeItem => {
+
+            //Wenn Playlist inaktiv ist, dieses nicht in Liste einfuegen
+            if (modeItem["inactive"]) {
+                return;
+            }
+
+            //Modus einfuegen (damit Filterung in Oberflaeche geht)
+            modeItem["mode"] = result["filterID"];
+
+            //Playlist-Objekt in Ausgabe Objekt einfuegen
+            jsonObj[result["mode"]]["items"].push(modeItem);
+        });
+    });
 
     //Wert merken, damit er an Clients uebergeben werden kann
     data["mainJSON"] = jsonObj;
