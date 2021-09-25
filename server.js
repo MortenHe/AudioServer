@@ -87,14 +87,10 @@ data["fileLength"] = 0;
 data["secondsPlayed"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
-data["jokerLock"] = false;
 data["userMode"] = configFile.userMode;
 data["pageTitle"] = configFile.userMode;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
-
-//Wo liegt der Joker-Ordner?
-setJokerDir();
 
 //Wo liegen die Mix-Files?
 setMixDir();
@@ -420,55 +416,6 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("volume");
                 break;
 
-            //Eine existierende Playlist in den Jokerordner kopieren (vorher Verzeichnis leeren)
-            case "set-joker":
-                if (data["jokerLock"]) {
-                    console.log("joker is locked");
-                    return;
-                }
-
-                //Lock setzen, damit nicht 2 Leute gleichzeitig den Joker Ordner setzen und direkt die Nutzer informieren
-                data["jokerLock"] = true;
-                sendClientInfo(["jokerLock"]);
-
-                //Aus welchem Ordner kommt der Joker-Inhalt
-                const wantedJokerFolder = audioFilesDir + "/" + value.wantedJokerFolder;
-
-                //Falls es fuer diese Hoespiel-Serie einen Joker-Ordner gibt (z.B. 00-pumuckl-joker), diesen verwenden, ansonsten allgemeinen Joker-Ordner (z.B. joker-luis)
-                const modeJokerFolder = audioFilesDir + "/" + value.mode + "/" + value.folder + "/00-" + value.folder + "-joker";
-                const usedJokerDir = fs.existsSync(modeJokerFolder) ? modeJokerFolder : data["jokerDir"];
-                console.log("use joker folder " + usedJokerDir);
-
-                //Joker-Folder der mit neuen Datei bespielt werden soll, laueft gerade -> Playback stoppen
-                if (data["playlist"] === usedJokerDir) {
-                    console.log("stop joker folder playback");
-                    player.stop();
-                }
-
-                //Joker Verzeichnis leeren
-                console.log("empty joker dir " + usedJokerDir);
-                fs.emptyDirSync(usedJokerDir);
-
-                //Neuen Dateien dorthin kopieren
-                console.log("copy files from " + wantedJokerFolder + " to joker folder " + usedJokerDir);
-                fs.copySync(wantedJokerFolder, usedJokerDir);
-
-                //Lock wieder oeffnen nach Kopiervorgang und Benutzer informieren
-                data["jokerLock"] = false;
-                messageArr.push("jokerLock");
-
-                //Joker-Folder lief gerade noch -> wieder starten mit neuen Dateien
-                if (data["playlist"] === usedJokerDir) {
-                    console.log("start joker folder with new tracks");
-
-                    //Info an Clients ueber neue Files
-                    messageArr.push("paused", "files");
-
-                    //Setlist erstellen und starten
-                    setPlaylist(false);
-                }
-                break;
-
             //Mix-Ordner anpassen (Dateien loeschen, umbenennen, neu hinkopieren)
             case "update-mix-folder":
 
@@ -517,10 +464,9 @@ wss.on('connection', function connection(ws) {
                 }
                 break;
 
-            //userMode setzen fuer neue Joker-Dir und Mix-Files Dir
+            //userMode setzen fuer Mix-Files Dir
             case "set-user-mode":
                 data["userMode"] = value;
-                setJokerDir();
                 setMixDir();
                 messageArr.push("userMode", "mixDir");
                 getMixFiles();
@@ -537,7 +483,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "jokerLock", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
+    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -825,11 +771,6 @@ function countdown() {
     else {
         shutdown();
     }
-}
-
-//Joker-Ordner setzen
-function setJokerDir() {
-    data["jokerDir"] = audioFilesDir + "/extra/misc/joker-" + data["userMode"];
 }
 
 //MixFiles-Ordner setzen
