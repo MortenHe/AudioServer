@@ -204,7 +204,7 @@ wss.on('connection', function connection(ws) {
         switch (type) {
 
             //neue Playlist laden (ueber Browser-Aufruf) oder per RFID
-            case "set-playlist": case "set-rfid-playlist": case "set-stt-playlist":
+            case "set-playlist": case "set-rfid-playlist": case "set-playlist-read":
                 console.log(type + JSON.stringify(value));
 
                 //Audio-Verzeichnis, random und aktives Item merken
@@ -220,7 +220,7 @@ wss.on('connection', function connection(ws) {
                 writeSessionJson();
 
                 //Soll Name der Playlist vorgelesen werden (wenn Playlist per STT gestartet wurde)
-                const readPlaylist = (type === 'set-stt-playlist');
+                const readPlaylist = (type === 'set-playlist-read');
 
                 //Setlist erstellen und starten
                 setPlaylist(false, readPlaylist);
