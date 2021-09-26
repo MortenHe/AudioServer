@@ -14,6 +14,7 @@ const fs = require('fs-extra');
 const shuffle = require('shuffle-array');
 const colors = require('colors');
 const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 
 //Skript-Verzeichnis
 let dirname = __dirname;
@@ -538,18 +539,17 @@ function setPlaylist(reloadSession, readPlaylist) {
 
         //Wenn Playlist vorgelesen werden soll (z.B. bei STT oder Random-Joker)
         if (readPlaylist) {
-            //TODO: weg
-            console.log("Vorlsen: " + data["activeItemName"]);
-            console.log("Vorlsen: " + titleToRead);
 
-            //Sprachausgabe fuer ausgewaehlte Playlist
+            //Player stoppen und Sprachausgabe fuer ausgewaehlte Playlist
+            player.stop();
+            const titleToRead = data["activeItemName"].replace(/ \- \d+ \-/, "");
             const pico2waveTTScommand = `
                                 pico2wave -l de-DE -w ${__dirname}/tts.wav "${titleToRead}" &&
                                 ffmpeg -i ${__dirname}/tts.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=2 ${__dirname}/tts-comp.wav &&
                                 aplay ${__dirname}/tts-comp.wav &&
                                 rm ${__dirname}/tts.wav &&
                                 rm ${__dirname}/tts-comp.wav`;
-            exec(pico2waveTTScommand);
+            execSync(pico2waveTTScommand);
         }
 
         //Liste der files zuruecksetzen
