@@ -169,7 +169,7 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
         data["position"] = lastSessionObj.position;
 
         //diese Playlist zu Beginn spielen
-        setPlaylist(true);
+        setPlaylist(true, lastSessionObj.readPlaylist);
     }
     catch (e) {
         console.log("invalid lastSeesion.json file");
@@ -204,7 +204,7 @@ wss.on('connection', function connection(ws) {
         switch (type) {
 
             //neue Playlist laden (ueber Browser-Aufruf) oder per RFID
-            case "set-playlist": case "set-rfid-playlist":
+            case "set-playlist": case "set-rfid-playlist": case "set-stt-playlist":
                 console.log(type + JSON.stringify(value));
 
                 //Audio-Verzeichnis, random und aktives Item merken
@@ -219,8 +219,11 @@ wss.on('connection', function connection(ws) {
                 //neue Playlist und allowRandom in Session-JSON-File schreiben
                 writeSessionJson();
 
+                //Soll Name der Playlist vorgelesen werden (wenn Playlist per STT gestartet wurde)
+                const readPlaylist = (type === 'set-stt-playlist');
+
                 //Setlist erstellen und starten
-                setPlaylist(false);
+                setPlaylist(false, readPlaylist);
 
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
@@ -388,7 +391,7 @@ wss.on('connection', function connection(ws) {
                 if (data["allowRandom"]) {
 
                     //Aktuelle Playlist mit neuem Random-Wert neu laden
-                    setPlaylist();
+                    setPlaylist(false, false);
                 }
 
                 //Pausierung zuruecksetzen und Clients informieren
@@ -460,7 +463,7 @@ wss.on('connection', function connection(ws) {
                     messageArr.push("paused", "files");
 
                     //Setlist erstellen und starten
-                    setPlaylist(false);
+                    setPlaylist(false, false);
                 }
                 break;
 
@@ -528,10 +531,26 @@ function startTimer() {
 }
 
 //Playlist erstellen und starten
-function setPlaylist(reloadSession) {
+function setPlaylist(reloadSession, readPlaylist) {
 
     //Sicherstellen, dass Verzeichnis existiert, aus dem die Dateien geladen werden sollen
     if (fs.existsSync(data["playlist"])) {
+
+        //Wenn Playlist vorgelesen werden soll (z.B. bei STT oder Random-Joker)
+        if (readPlaylist) {
+            //TODO: weg
+            console.log("Vorlsen: " + data["activeItemName"]);
+            console.log("Vorlsen: " + titleToRead);
+
+            //Sprachausgabe fuer ausgewaehlte Playlist
+            const pico2waveTTScommand = `
+                                pico2wave -l de-DE -w ${__dirname}/tts.wav "${titleToRead}" &&
+                                ffmpeg -i ${__dirname}/tts.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=2 ${__dirname}/tts-comp.wav &&
+                                aplay ${__dirname}/tts-comp.wav &&
+                                rm ${__dirname}/tts.wav &&
+                                rm ${__dirname}/tts-comp.wav`;
+            exec(pico2waveTTScommand);
+        }
 
         //Liste der files zuruecksetzen
         data["files"] = [];
@@ -580,7 +599,8 @@ function writeSessionJson() {
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
         allowRandom: data["allowRandom"],
-        position: data["position"]
+        position: data["position"],
+        readPlaylist: false
     });
 }
 
