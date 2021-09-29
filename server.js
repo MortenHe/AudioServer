@@ -17,13 +17,14 @@ const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
 
 //Skript-Verzeichnis
-let dirname = __dirname;
+const dirname = __dirname;
 
 //Config
 const configFile = fs.readJsonSync(dirname + '/config.json');
 
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
+const { constants } = require('buffer');
 const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true });
 
 //Wo liegen Audiodateien
@@ -194,12 +195,12 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
 
         //Nachricht kommt als String -> in JSON Objekt konvertieren
-        var obj = JSON.parse(message);
-        let type = obj.type;
-        let value = obj.value;
+        const obj = JSON.parse(message);
+        const type = obj.type;
+        const value = obj.value;
 
         //Array von Messages erstellen, die an Client gesendet werden
-        let messageArr = [];
+        const messageArr = [];
 
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
@@ -310,7 +311,7 @@ wss.on('connection', function connection(ws) {
                 }
 
                 //Wie viele Schritte in welche Richtung springen?
-                let jumpTo = value - data["position"];
+                const jumpTo = value - data["position"];
                 console.log("jump-to " + jumpTo);
 
                 //wenn nicht auf den bereits laufenden geklickt wurde, zu gewissem Titel springen
@@ -331,10 +332,8 @@ wss.on('connection', function connection(ws) {
             //Innerhalb des Titels spulen
             case "seek":
 
-                //+/- 10 Sek
-                let seekTo = value ? 10 : -10;
-
-                //seek in item
+                //seek +/- 10 Sek in item
+                const seekTo = value ? 10 : -10;
                 player.seek(seekTo);
                 break;
 
@@ -487,7 +486,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
+    const WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -510,13 +509,13 @@ function startTimer() {
         //console.log("track progress " + data["secondsPlayed"] + " - track time left " + totalSeconds);
 
         //Umrechung der Sekunden in [h, m, s] fuer formattierte Darstellung
-        let hours = Math.floor(totalSeconds / 3600);
+        const hours = Math.floor(totalSeconds / 3600);
         totalSeconds %= 3600;
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = totalSeconds % 60;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
 
         //h, m, s-Werte in Array packen
-        let output = [hours, minutes, seconds];
+        const output = [hours, minutes, seconds];
 
         //[2,44,1] => 02:44:01
         data["time"] = timelite.time.str(output);
@@ -610,13 +609,11 @@ function sendClientInfo(messageArr) {
     //Ueber Liste der Messages gehen
     messageArr.forEach(message => {
 
-        //Message-Object erzeugen
-        let messageObj = {
+        //Message-Object erzeugen und an Liste der Clients verschicken
+        const messageObj = {
             "type": message,
             "value": data[message]
         };
-
-        //Ueber Liste der Clients gehen und Nachricht schicken
         for (ws of wss.clients) {
             try {
                 ws.send(JSON.stringify(messageObj));
@@ -634,19 +631,19 @@ function getMainJSON() {
     const jsonObj = fs.readJSONSync(jsonDir + "/audiolist.json");
 
     //Array, damit auslesen der einzelnen Unter-JSONs (bibi-tina.json, bobo.json) parallel erfolgen kann
-    let modeDataFileArr = [];
+    const modeDataFileArr = [];
 
     //Ueber Modes gehen (hsp, kindermusik, cds, extra)
     for (let [mode, modeData] of Object.entries(jsonObj)) {
 
         //merken, welche Filter geloescht werden sollen
-        let inactiveFilters = [];
+        const inactiveFilters = [];
 
         //Ueber Filter des Modus gehen (bibi-tina, bobo,...)
         modeData["filter"]["filters"].forEach((filterData, index) => {
 
             //filterID merken (bibi-tina, bobo)
-            let filterID = filterData["id"];
+            const filterID = filterData["id"];
 
             //All-Filter wird immer angezeigt -> "active" loeschen (wird nicht fuer die Oberflaeche benoetigt)
             if (filterID === "all") {
@@ -680,7 +677,7 @@ function getMainJSON() {
 
         //Ueber inaktive Filter gehen und aus JSON-Obj loeschen
         inactiveFilters.forEach(filter => {
-            let filterIndex = jsonObj[mode]["filter"]["filters"].indexOf(filter);
+            const filterIndex = jsonObj[mode]["filter"]["filters"].indexOf(filter);
             jsonObj[mode]["filter"]["filters"].splice(filterIndex, 1);
         });
     }
