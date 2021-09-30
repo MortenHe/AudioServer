@@ -5,13 +5,13 @@
   "dependencies": {
     "colors": "^1.4.0",
     "fs-extra": "^10.0.0",
-    "glob": "^7.1.7",
+    "glob": "^7.2.0",
     "glob-promise": "^4.2.0",
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
     "timelite": "1.0.0",
     "underscore": "^1.13.1",
-    "ws": "^7.5.1"
+    "ws": "^8.2.2"
   },
   "license": "GPL-3.0-or-later",
   "repository": {
