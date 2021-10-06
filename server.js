@@ -544,9 +544,11 @@ function setPlaylist(reloadSession, readPlaylist) {
             const titleToRead = data["activeItemName"].replace(/ \- \d+ \-/, "");
             const pico2waveTTScommand = `
                                 pico2wave -l de-DE -w ${__dirname}/tts.wav "${titleToRead}" &&
-                                ffmpeg -i ${__dirname}/tts.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=2 ${__dirname}/tts-comp.wav &&
+                                ffmpeg -i ${__dirname}/tts.wav -af equalizer=f=300:t=h:width=200:g=-30 ${__dirname}/tts-eq.wav
+                                ffmpeg -i ${__dirname}/tts-eq.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=8 ${__dirname}/tts-comp.wav &&
                                 aplay ${__dirname}/tts-comp.wav &&
                                 rm ${__dirname}/tts.wav &&
+                                rm ${__dirname}/tts-eq.wav &&
                                 rm ${__dirname}/tts-comp.wav`;
             execSync(pico2waveTTScommand);
         }
