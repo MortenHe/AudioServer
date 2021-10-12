@@ -362,7 +362,7 @@ wss.on('connection', function connection(ws) {
 
                     //Wenn jetzt pausiert ist, Countdown starten
                     if (data["paused"]) {
-                        startCountdown();
+                        startCountdown(2);
                     }
 
                     //Pausierung wurde beendet -> Countdown beenden
@@ -757,9 +757,9 @@ function setVolume() {
 }
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
-function startCountdown() {
+function startCountdown(factor = 1) {
     console.log("start countdown")
-    data["countdownTime"] = countdownTime;
+    data["countdownTime"] = countdownTime * factor;
     countdownID = setInterval(countdown, 1000);
 }
 
