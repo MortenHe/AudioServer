@@ -84,6 +84,7 @@ data["random"] = false;
 data["allowRandom"] = false;
 data["activeItem"] = "";
 data["activeItemName"] = "";
+data["activeItemLang"] = "";
 data["playlist"] = "";
 data["fileLength"] = 0;
 data["secondsPlayed"] = 0;
@@ -167,6 +168,7 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
         //Letzte Infos laden
         data["activeItem"] = lastSessionObj.activeItem;
         data["activeItemName"] = lastSessionObj.activeItemName;
+        data["activeItemLang"] = lastSessionObj.activeItemLang;
         data["allowRandom"] = lastSessionObj.allowRandom;
         data["position"] = lastSessionObj.position;
 
@@ -214,6 +216,7 @@ wss.on('connection', function connection(ws) {
                 data["allowRandom"] = value.allowRandom;
                 data["activeItem"] = value.path;
                 data["activeItemName"] = value.name;
+                data["activeItemLang"] = value.lang ?? "de-DE";
 
                 //Countdown abbrechen
                 resetCountdown();
@@ -539,11 +542,11 @@ function setPlaylist(reloadSession, readPlaylist) {
         //Wenn Playlist vorgelesen werden soll (z.B. bei STT oder Random-Joker)
         if (readPlaylist) {
 
-            //Player stoppen und Sprachausgabe fuer ausgewaehlte Playlist
+            //Player stoppen und Sprachausgabe fuer ausgewaehlte Playlist mit passender Sprache
             player.stop();
             const titleToRead = data["activeItemName"].replace(/ \- \d+ \-/, "");
             const pico2waveTTScommand = `
-                                pico2wave -l de-DE -w ${__dirname}/tts.wav "${titleToRead}" &&
+                                pico2wave -l ${data["activeItemName"]} -w ${__dirname}/tts.wav "${titleToRead}" &&
                                 ffmpeg -i ${__dirname}/tts.wav -af equalizer=f=300:t=h:width=200:g=-30 ${__dirname}/tts-eq.wav -hide_banner -loglevel error &&
                                 ffmpeg -i ${__dirname}/tts-eq.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=8 ${__dirname}/tts-comp.wav  -hide_banner -loglevel error &&
                                 aplay ${__dirname}/tts-comp.wav -q &&
@@ -599,6 +602,7 @@ function writeSessionJson() {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
+        activeItemName: data["activeItemLang"] ?? "de-DE",
         allowRandom: data["allowRandom"],
         position: data["position"],
         readPlaylist: false
