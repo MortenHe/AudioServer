@@ -8,6 +8,7 @@
     "glob": "^7.2.0",
     "glob-promise": "^4.2.0",
     "mplayer-wrapper": "^1.0.0",
+    "node-wav-player": "^0.2.0",
     "shuffle-array": "^1.0.1",
     "timelite": "1.0.0",
     "underscore": "^1.13.1",

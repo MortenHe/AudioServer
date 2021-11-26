@@ -15,6 +15,7 @@ const shuffle = require('shuffle-array');
 const colors = require('colors');
 const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
+const singleSoundPlayer = require('node-wav-player');
 
 //Skript-Verzeichnis
 const dirname = __dirname;
@@ -271,14 +272,16 @@ wss.on('connection', function connection(ws) {
 
                         //Wenn weniger als x Sekunden vergangen sind -> zum vorherigen Titel springen
                         if (data["secondsPlayed"] < 3) {
-                            console.log("go to previous track")
+                            console.log("go to previous track");
                             player.previous();
+                            playSound("beep-prev.wav");
                         }
 
                         //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
                         else {
                             console.log("repeat current track");
                             player.seekPercent(0);
+                            playSound("beep-same.wav");
                         }
                     }
 
@@ -799,6 +802,12 @@ function countdown() {
 //MixFiles-Ordner setzen
 function setMixDir() {
     data["mixDir"] = audioFilesDir + "/extra/misc/mix-" + data["userMode"];
+}
+
+//Einzelsound abspielen
+function playSound(sound) {
+    const playedSound = sound ?? "button.wav";
+    singleSoundPlayer.play({ path: __dirname + "/" + playedSound });
 }
 
 //Pi herunterfahren
