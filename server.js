@@ -176,7 +176,7 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
         setPlaylist(true, lastSessionObj.readPlaylist);
     }
     catch (e) {
-        console.log("invalid lastSeesion.json file");
+        console.log("invalid lastSession.json file");
     }
 }
 
@@ -547,8 +547,8 @@ function setPlaylist(reloadSession, readPlaylist) {
             const titleToRead = data["activeItemName"].replace(/ \- \d+ \-/, "");
             const pico2waveTTScommand = `
                                 pico2wave -l ${data["activeItemLang"]} -w ${__dirname}/tts.wav "${titleToRead}" &&
-                                ffmpeg -i ${__dirname}/tts.wav -af equalizer=f=300:t=h:width=200:g=-30 ${__dirname}/tts-eq.wav -hide_banner -loglevel error &&
-                                ffmpeg -i ${__dirname}/tts-eq.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=8 ${__dirname}/tts-comp.wav  -hide_banner -loglevel error &&
+                                ffmpeg -i ${__dirname}/tts.wav -af equalizer=f=300:t=h:width=200:g=-30 ${__dirname}/tts-eq.wav -hide_banner -loglevel error -y &&
+                                ffmpeg -i ${__dirname}/tts-eq.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=8 ${__dirname}/tts-comp.wav -hide_banner -loglevel error -y &&
                                 aplay ${__dirname}/tts-comp.wav -q &&
                                 rm ${__dirname}/tts.wav &&
                                 rm ${__dirname}/tts-eq.wav &&
