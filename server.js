@@ -251,6 +251,7 @@ wss.on('connection', function connection(ws) {
                     //Wenn wir noch nicht beim letzten Titel sind, zum naechsten Titel springen
                     if (data["position"] < (data["files"].length - 1)) {
                         player.next();
+                        playSound("track-change.wav");
                     }
 
                     //wir sind beim letzten Titel
@@ -274,14 +275,14 @@ wss.on('connection', function connection(ws) {
                         if (data["secondsPlayed"] < 3) {
                             console.log("go to previous track");
                             player.previous();
-                            playSound("beep-prev.wav");
+                            playSound("track-change.wav");
                         }
 
                         //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
                         else {
                             console.log("repeat current track");
                             player.seekPercent(0);
-                            playSound("beep-same.wav");
+                            playSound("track-same.wav");
                         }
                     }
 
@@ -291,6 +292,7 @@ wss.on('connection', function connection(ws) {
                         //Playlist nochmal von vorne starten
                         console.log("first track from start");
                         player.seekPercent(0);
+                        playSound("track-same.wav");
 
                         //Wenn Titel pausiert war, wieder unpausen
                         if (data["paused"]) {
