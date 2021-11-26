@@ -359,6 +359,7 @@ wss.on('connection', function connection(ws) {
 
             //Pause-Status toggeln
             case 'toggle-paused-restart': case 'toggle-paused':
+                playSound("pause.wav");
 
                 //Wenn wir gerade in der Playlist sind
                 if (data["position"] !== -1) {
@@ -809,7 +810,7 @@ function setMixDir() {
 //Einzelsound abspielen
 function playSound(sound) {
     const playedSound = sound ?? "button.wav";
-    singleSoundPlayer.play({ path: __dirname + "/" + playedSound });
+    singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
 }
 
 //Pi herunterfahren
