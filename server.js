@@ -217,7 +217,7 @@ wss.on('connection', function connection(ws) {
                 data["allowRandom"] = value.allowRandom;
                 data["activeItem"] = value.path;
                 data["activeItemName"] = value.name;
-                data["activeItemLang"] = value.lang ?? "de-DE";
+                data["activeItemLang"] = value.lang || "de-DE";
 
                 //Countdown abbrechen
                 resetCountdown();
@@ -608,7 +608,7 @@ function writeSessionJson() {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
-        activeItemLang: data["activeItemLang"] ?? "de-DE",
+        activeItemLang: data["activeItemLang"] || "de-DE",
         allowRandom: data["allowRandom"],
         position: data["position"],
         readPlaylist: false
@@ -809,7 +809,7 @@ function setMixDir() {
 
 //Einzelsound abspielen
 function playSound(sound) {
-    const playedSound = sound ?? "button.wav";
+    const playedSound = sound || "button.wav";
     singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
 }
 
