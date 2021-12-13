@@ -279,8 +279,10 @@ wss.on('connection', function connection(ws) {
                         }
 
                         //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
+                        //Gespielte Sekunden manuell auf 0 setzen. Damit mit schnellen Klicks der vorherige Titel ausgewaehlt werden kann
                         else {
                             console.log("repeat current track");
+                            data["secondsPlayed"] = 0;
                             player.seekPercent(0);
                             playSound("track-same.wav");
                         }
