@@ -1,6 +1,6 @@
 {
     "audioDir": "/home/pi/Nextcloud/audio",
-    "userMode": "pw",
+    "userMode": "laila|luis|sh|mh",
     "shpAudioMode": "kids",
     "audioOutput": "Digital|HDMI|Master|Speaker|PCM",
     "volume": 80,
