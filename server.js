@@ -96,7 +96,7 @@ data["pageTitle"] = configFile.userMode;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
 
-//Wo liegen die Mix-Files?
+//Wo liegen die Herz-Mix-Files?
 setMixDir();
 
 //JSON fuer Oberflaeche erstellen mit Infos zu aktiven Foldern, Filtern, etc.
@@ -430,10 +430,10 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("volume");
                 break;
 
-            //Mix-Ordner anpassen (Dateien loeschen, umbenennen, neu hinkopieren)
+            //Herz-Mix-Ordner anpassen (Dateien loeschen, umbenennen, neu hinkopieren)
             case "update-mix-folder":
 
-                //Mix-Folder laueft gerade -> Playback stoppen
+                //Herz-Mix-Folder laueft gerade -> Playback stoppen
                 if (data["playlist"] === data["mixDir"]) {
                     console.log("stop mix folder playback");
                     player.stop();
@@ -449,13 +449,13 @@ wss.on('connection', function connection(ws) {
                             fs.copySync(action.from, action.to);
                             break;
 
-                        //Datei aus Mixordner wird umbenannt fuer passende Reihenfolge
+                        //Datei aus Herz-Mix-Ornder wird umbenannt fuer passende Reihenfolge
                         case "move":
                             console.log("move " + action.from + " to " + action.to);
                             fs.moveSync(action.from, action.to);
                             break;
 
-                        //Datei aus Mixordner wird geloescht
+                        //Datei aus Herz-Mix-Ordner wird geloescht
                         case "remove":
                             console.log("delete " + action.path);
                             fs.removeSync(action.path);
@@ -463,10 +463,10 @@ wss.on('connection', function connection(ws) {
                     }
                 }
 
-                //Aktualisierten Inhalt des Mix-Folders ermitteln und an Clients melden
+                //Aktualisierten Inhalt des Herz-Mix-Folders ermitteln und an Clients melden
                 getMixFiles();
 
-                //Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
+                //Herz-Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
                 if (data["playlist"] === data["mixDir"]) {
                     console.log("start mix folder with new tracks");
 
@@ -478,7 +478,7 @@ wss.on('connection', function connection(ws) {
                 }
                 break;
 
-            //userMode setzen fuer Mix-Files Dir
+            //userMode setzen fuer Herz-Mix-Files Dir
             case "set-user-mode":
                 data["userMode"] = value;
                 setMixDir();
@@ -719,7 +719,7 @@ function getMainJSON() {
     data["mainJSON"] = jsonObj;
 }
 
-//Aktuelle Dateien aus Mix-Ordner holen und an Clients schicken
+//Aktuelle Dateien aus Herz-Mix-Ordner holen und an Clients schicken
 function getMixFiles() {
     glob.promise(data["mixDir"] + "/*.mp3").then((files) => {
         data["mixFiles"] = files.map(path => {
@@ -732,7 +732,7 @@ function getMixFiles() {
     });
 }
 
-//Dateien fuer Mix-Suche ermitteln
+//Dateien fuer Herz-Mix-Suche ermitteln
 function getSearchFiles() {
     console.log("create mix files");
 
@@ -804,9 +804,9 @@ function countdown() {
     }
 }
 
-//MixFiles-Ordner setzen
+//Herz-Mix-Ordner setzen
 function setMixDir() {
-    data["mixDir"] = audioFilesDir + "/extra/misc/mix-" + data["userMode"];
+    data["mixDir"] = audioFilesDir + "/extra/misc/heart-mix-" + data["userMode"];
 }
 
 //Einzelsound abspielen
