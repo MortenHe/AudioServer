@@ -11,7 +11,6 @@ const path = require('path');
 const glob = require("glob-promise");
 const _ = require("underscore");
 const fs = require('fs-extra');
-const shuffle = require('shuffle-array');
 const colors = require('colors');
 const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
@@ -31,6 +30,7 @@ const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true }
 //Wo liegen Audiodateien
 const audioDir = configFile.audioDir;
 const audioFilesDir = audioDir + "/wap/mp3";
+const readFilesDir = audioDir + "/wap/wav";
 console.log("audio files are located in " + audioFilesDir.yellow);
 
 //Befehl fuer Autostart in Datei schreiben
@@ -528,16 +528,13 @@ function setPlaylist(reloadSession, readPlaylist) {
 
             //Player stoppen und Sprachausgabe fuer ausgewaehlte Playlist mit passender Sprache
             player.stop();
-            const titleToRead = data["activeItemName"].replace(/ \- \d+ \-/, "");
-            const pico2waveTTScommand = `
-                                pico2wave -l ${data["activeItemLang"]} -w ${__dirname}/tts.wav "${titleToRead}" &&
-                                ffmpeg -i ${__dirname}/tts.wav -af equalizer=f=300:t=h:width=200:g=-30 ${__dirname}/tts-eq.wav -hide_banner -loglevel error -y &&
-                                ffmpeg -i ${__dirname}/tts-eq.wav -af acompressor=threshold=-11dB:ratio=9:attack=200:release=1000:makeup=8 ${__dirname}/tts-comp.wav -hide_banner -loglevel error -y &&
-                                aplay ${__dirname}/tts-comp.wav -q &&
-                                rm ${__dirname}/tts.wav &&
-                                rm ${__dirname}/tts-eq.wav &&
-                                rm ${__dirname}/tts-comp.wav`;
-            execSync(pico2waveTTScommand);
+
+            //Split /home/pi/Nextcloud/audio/wap/mp3/hsp/bibi-tina/50-das-kuerbisfest, um Namen der Vorlesedatei abzuleiten -> hsp-bibi-tina-48-ein-ungebetener-gast.wav
+            splitPath = (data["playlist"].split("/"));
+            readFileName = splitPath[splitPath.length - 3] + "-" + splitPath[splitPath.length - 2] + "-" + splitPath[splitPath.length - 1] + ".wav";
+
+            //Playlist vorlesen
+            execSync(`aplay ${readFilesDir}/${readFileName}`);
         }
 
         //Liste der files zuruecksetzen
