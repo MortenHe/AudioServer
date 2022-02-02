@@ -75,14 +75,12 @@ if (configFile.STT) {
     });
 }
 
-//Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / Random merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
+//Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
 data["volume"] = configFile.volume;
 data["position"] = -1;
 data["files"] = [];
 data["paused"] = false;
-data["random"] = false;
-data["allowRandom"] = false;
 data["activeItem"] = "";
 data["activeItemName"] = "";
 data["activeItemLang"] = "";
@@ -170,7 +168,6 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
         data["activeItem"] = lastSessionObj.activeItem;
         data["activeItemName"] = lastSessionObj.activeItemName;
         data["activeItemLang"] = lastSessionObj.activeItemLang;
-        data["allowRandom"] = lastSessionObj.allowRandom;
         data["position"] = lastSessionObj.position;
 
         //diese Playlist zu Beginn spielen
@@ -212,9 +209,8 @@ wss.on('connection', function connection(ws) {
             case "set-playlist": case "set-rfid-playlist": case "set-playlist-read":
                 console.log(type + JSON.stringify(value));
 
-                //Audio-Verzeichnis, random und aktives Item merken
+                //Audio-Verzeichnis und aktives Item merken
                 data["playlist"] = audioFilesDir + "/" + value.mode + "/" + value.path;
-                data["allowRandom"] = value.allowRandom;
                 data["activeItem"] = value.path;
                 data["activeItemName"] = value.name;
                 data["activeItemLang"] = value.lang || "de-DE";
@@ -222,7 +218,7 @@ wss.on('connection', function connection(ws) {
                 //Countdown abbrechen
                 resetCountdown();
 
-                //neue Playlist und allowRandom in Session-JSON-File schreiben
+                //neue Playlist in Session-JSON-File schreiben
                 writeSessionJson();
 
                 //Soll Name der Playlist vorgelesen werden (wenn Playlist per STT gestartet wurde)
@@ -235,7 +231,7 @@ wss.on('connection', function connection(ws) {
                 data["paused"] = false;
 
                 //Zusaetzliche Nachricht an clients
-                messageArr.push("paused", "activeItem", "activeItemName", "files", "allowRandom");
+                messageArr.push("paused", "activeItem", "activeItemName", "files");
                 break;
 
             //Song wurde vom Nutzer weitergeschaltet
@@ -392,26 +388,6 @@ wss.on('connection', function connection(ws) {
                 }
                 break;
 
-            //Random toggle
-            case 'toggle-random':
-
-                //Random-Wert togglen
-                data["random"] = !data["random"];
-
-                //Wenn random erlaubt ist
-                if (data["allowRandom"]) {
-
-                    //Aktuelle Playlist mit neuem Random-Wert neu laden
-                    setPlaylist(false, false);
-                }
-
-                //Pausierung zuruecksetzen und Clients informieren
-                data["paused"] = false;
-
-                //Nachricht an clients ueber aktuellen Random-Wert und file-list
-                messageArr.push("random", "files", "paused");
-                break;
-
             //Lautstaerke aendern
             case 'change-volume':
 
@@ -468,7 +444,7 @@ wss.on('connection', function connection(ws) {
 
                 //Herz-Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
                 if (data["playlist"] === data["mixDir"]) {
-                    console.log("start mix folder with new tracks");
+                    console.log("start mix folder with new files");
 
                     //Info an Clients ueber neue Files
                     messageArr.push("paused", "files");
@@ -497,7 +473,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients beim einmalig bei der Verbindung ueber div. Wert informieren
-    const WSConnectMessageArr = ["volume", "position", "paused", "files", "random", "activeItem", "activeItemName", "allowRandom", "countdownTime", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
+    const WSConnectMessageArr = ["volume", "position", "paused", "files", "activeItem", "activeItemName", "countdownTime", "mixDir", "mixFiles", "searchFiles", "mainJSON", "userMode", "pageTitle"];
     WSConnectMessageArr.forEach(message => {
         ws.send(JSON.stringify({
             "type": message,
@@ -506,7 +482,7 @@ wss.on('connection', function connection(ws) {
     });
 });
 
-//Timer-Funktion benachrichtigt regelmaessig die WS ueber aktuelle Position des Tracks
+//Timer-Funktion benachrichtigt regelmaessig die WS ueber aktuelle Position des Titels
 function startTimer() {
 
     //Wenn time_pos property geliefert wirde
@@ -535,7 +511,7 @@ function startTimer() {
         sendClientInfo(["time"]);
     });
 
-    //Jede Sekunde die aktuelle Zeit innerhalb des Tracks liefern
+    //Jede Sekunde die aktuelle Zeit innerhalb des Titels liefern
     setInterval(() => {
         player.getProps(['time_pos']);
     }, 1000);
@@ -547,7 +523,7 @@ function setPlaylist(reloadSession, readPlaylist) {
     //Sicherstellen, dass Verzeichnis existiert, aus dem die Dateien geladen werden sollen
     if (fs.existsSync(data["playlist"])) {
 
-        //Wenn Playlist vorgelesen werden soll (z.B. bei STT oder Random-Joker)
+        //Wenn Playlist vorgelesen werden soll (z.B. bei STT)
         if (readPlaylist) {
 
             //Player stoppen und Sprachausgabe fuer ausgewaehlte Playlist mit passender Sprache
@@ -576,11 +552,6 @@ function setPlaylist(reloadSession, readPlaylist) {
                 data["files"].push(data["playlist"] + "/" + file);
             }
         });
-
-        //Bei Random und erlaubtem Random, FileArray shuffeln
-        if (data["random"] && data["allowRandom"]) {
-            shuffle(data["files"]);
-        }
 
         //Playlist-Datei schreiben (1 Zeile pro item)
         fs.writeFileSync(dirname + "/playlist.txt", data["files"].join("\n"));
@@ -611,7 +582,6 @@ function writeSessionJson() {
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
         activeItemLang: data["activeItemLang"] || "de-DE",
-        allowRandom: data["allowRandom"],
         position: data["position"],
         readPlaylist: false
     });
