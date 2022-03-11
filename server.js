@@ -1,17 +1,11 @@
-//Mplayer + Wrapper anlegen
 const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
 const { spawn } = require('child_process');
-
-//Zeit Formattierung laden: [5, 13, 22] => 05:13:22
 const timelite = require('timelite');
-
-//Filesystem und Path Abfragen fuer Playlist und weitere Utils
 const path = require('path');
 const glob = require("glob-promise");
 const _ = require("underscore");
 const fs = require('fs-extra');
-const colors = require('colors');
 const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
 const singleSoundPlayer = require('node-wav-player');
@@ -154,7 +148,7 @@ player.on('track-change', () => {
 });
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
-if (fs.existsSync(dirname + "/lastSession.json")) {
+if (fs.existsSync(__dirname + "/lastSession.json")) {
     try {
         const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
         data["playlist"] = lastSessionObj.path;
@@ -544,7 +538,7 @@ function setPlaylist(reloadSession, readPlaylist) {
         });
 
         //Playlist-Datei schreiben (1 Zeile pro item)
-        fs.writeFileSync(dirname + "/playlist.txt", data["files"].join("\n"));
+        fs.writeFileSync(__dirname + "/playlist.txt", data["files"].join("\n"));
 
         //Playlist-Datei laden und starten
         player.exec("loadlist " + __dirname + "/playlist.txt");
@@ -565,7 +559,7 @@ function setPlaylist(reloadSession, readPlaylist) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-    fs.writeJsonSync(dirname + "/lastSession.json", {
+    fs.writeJsonSync(__dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
@@ -583,7 +577,7 @@ function sendClientInfo(messageArr) {
             "type": message,
             "value": data[message]
         };
-        for (ws of wss.clients) {
+        for (const ws of wss.clients) {
             try {
                 ws.send(JSON.stringify(messageObj));
             }
