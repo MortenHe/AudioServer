@@ -1,27 +1,30 @@
-//Mplayer + Wrapper anlegen
-const createPlayer = require('mplayer-wrapper');
+import createPlayer from 'mplayer-wrapper';
 const player = createPlayer();
-const { spawn } = require('child_process');
+import { spawn } from 'child_process';
 
 //Zeit Formattierung laden: [5, 13, 22] => 05:13:22
-const timelite = require('timelite');
+import timelite from 'timelite';
 
 //Filesystem und Path Abfragen fuer Playlist und weitere Utils
-const path = require('path');
-const glob = require("glob-promise");
-const _ = require("underscore");
-const fs = require('fs-extra');
-const colors = require('colors');
-const exec = require('child_process').exec;
-const execSync = require('child_process').execSync;
-const singleSoundPlayer = require('node-wav-player');
+import path from 'path';
+import glob from "glob-promise";
+import _ from "underscore";
+import fs from 'fs-extra';
+//const exec = require('child_process').exec;
+import util from 'util';
+import exec from 'child_process';
+//import exec from = util.promisify(require('child_process').exec);
+import execSync from 'child_process';
+import singleSoundPlayer from 'node-wav-player';
 
-//Config
-const configFile = fs.readJsonSync(__dirname + '/config.json');
+import { URL } from 'url';
+const __dirname = new URL('.', import.meta.url).pathname;
 
-//WebSocketServer anlegen und starten
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: configFile.port, clientTracking: true });
+const configFile = await fs.readJson(__dirname + '/config.json');
+
+import { WebSocketServer } from 'ws';
+import { exit } from 'process';
+const wss = new WebSocketServer({ port: configFile.port, clientTracking: true });
 
 //Wo liegen Audiodateien
 const audioDir = configFile.audioDir;
@@ -38,7 +41,7 @@ var countdownID = null;
 
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
-    console.log("Use GPIO Buttons");
+    console.log("use GPIO Buttons");
     const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/button.js", configFile.port]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
@@ -47,7 +50,7 @@ if (configFile.GPIOButtons) {
 
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
-    console.log("Use USB RFID Reader");
+    console.log("use USB RFID Reader");
     const rfid_usb = spawn("node", [__dirname + "/../WSRFID/rfid.js", configFile.port]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
@@ -56,7 +59,7 @@ if (configFile.USBRFIDReader) {
 
 //STT starten, falls konfiguriert
 if (configFile.STT) {
-    console.log("Use Speach to text");
+    console.log("use Speach to text");
 
     //JSON-File fuer Indexerzeugung erstellen
     const stt_index = spawn("node", [__dirname + "/../WSSTT/createJsonIndexFile.js", configFile.port]);
@@ -72,7 +75,7 @@ if (configFile.STT) {
 }
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus merken, damit Clients, die sich spaeter anmelden, diese Info bekommen
-var data = [];
+const data = [];
 data["volume"] = configFile.volume;
 data["position"] = -1;
 data["files"] = [];
@@ -86,6 +89,7 @@ data["secondsPlayed"] = 0;
 data["time"] = 0;
 data["countdownTime"] = -1;
 data["userMode"] = configFile.userMode;
+//TODO: Eigene Variable -> Kein userMode fuer SH mehr
 data["pageTitle"] = configFile.userMode;
 data["mixFiles"] = [];
 data["mainJSON"] = {};
@@ -154,9 +158,9 @@ player.on('track-change', () => {
 });
 
 //Infos aus letzter Session auslesen, falls die Datei existiert
-if (fs.existsSync(dirname + "/lastSession.json")) {
+if (fs.pathExists(__dirname + "/lastSession.json")) {
     try {
-        const lastSessionObj = fs.readJsonSync(__dirname + "/lastSession.json");
+        const lastSessionObj = await fs.readJSON(__dirname + "/lastSession.json");
         data["playlist"] = lastSessionObj.path;
         console.log("load playlist from last session " + data["playlist"]);
 
@@ -167,7 +171,7 @@ if (fs.existsSync(dirname + "/lastSession.json")) {
         data["position"] = lastSessionObj.position;
 
         //diese Playlist zu Beginn spielen
-        setPlaylist(true, lastSessionObj.readPlaylist);
+        await setPlaylist(true, lastSessionObj.readPlaylist);
     }
     catch (e) {
         console.log("invalid lastSession.json file");
@@ -188,7 +192,7 @@ wss.on('connection', function connection(ws) {
     console.log("new client connected");
 
     //Wenn WS eine Nachricht an WSS sendet
-    ws.on('message', function incoming(message) {
+    ws.on('message', async function incoming(message) {
 
         //Nachricht kommt als String -> in JSON Objekt konvertieren
         const obj = JSON.parse(message);
@@ -221,7 +225,7 @@ wss.on('connection', function connection(ws) {
                 const readPlaylist = (type === 'set-playlist-read');
 
                 //Setlist erstellen und starten
-                setPlaylist(false, readPlaylist);
+                await setPlaylist(false, readPlaylist);
 
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
@@ -418,25 +422,25 @@ wss.on('connection', function connection(ws) {
                         //Neue Datei kommt aus Ordner ausserhalb
                         case "copy":
                             console.log("copy " + action.from + " to " + action.to);
-                            fs.copySync(action.from, action.to);
+                            await fs.copy(action.from, action.to);
                             break;
 
                         //Datei aus Herz-Mix-Ornder wird umbenannt fuer passende Reihenfolge
                         case "move":
                             console.log("move " + action.from + " to " + action.to);
-                            fs.moveSync(action.from, action.to);
+                            await fs.move(action.from, action.to);
                             break;
 
                         //Datei aus Herz-Mix-Ordner wird geloescht
                         case "remove":
                             console.log("delete " + action.path);
-                            fs.removeSync(action.path);
+                            await fs.remove(action.path);
                             break;
                     }
                 }
 
                 //Aktualisierten Inhalt des Herz-Mix-Folders ermitteln und an Clients melden
-                getMixFiles();
+                await getMixFiles();
 
                 //Herz-Mix-Folder lief gerade noch -> wieder starten mit neuen Dateien
                 if (data["playlist"] === data["mixDir"]) {
@@ -446,7 +450,7 @@ wss.on('connection', function connection(ws) {
                     messageArr.push("paused", "files");
 
                     //Setlist erstellen und starten
-                    setPlaylist(false, false);
+                    await setPlaylist(false, false);
                 }
                 break;
 
@@ -488,6 +492,7 @@ function startTimer() {
         data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
 
         //Wie viele Sekunden laeuft der Track noch?
+        //TODO: const
         const totalSecondsRaw = data["fileLength"] - data["secondsPlayed"];
         //console.log("track progress " + data["secondsPlayed"] + " - track time left " + totalSecondsRaw);
 
@@ -511,10 +516,10 @@ function startTimer() {
 }
 
 //Playlist erstellen und starten
-function setPlaylist(reloadSession, readPlaylist) {
+async function setPlaylist(reloadSession, readPlaylist) {
 
     //Sicherstellen, dass Verzeichnis existiert, aus dem die Dateien geladen werden sollen
-    if (fs.existsSync(data["playlist"])) {
+    if (fs.pathExists(data["playlist"])) {
 
         //Wenn Playlist vorgelesen werden soll (z.B. bei STT)
         if (readPlaylist) {
@@ -528,23 +533,28 @@ function setPlaylist(reloadSession, readPlaylist) {
 
             //Playlist vorlesen
             execSync(`aplay ${readFilesDir}/${readFileName}`);
+
+            //TODO: dauert 4 Sek bis Skript weiterlaeuft
+            /*
+            await singleSoundPlayer.play({
+                path: readFilesDir + "/" + readFileName,
+                sync: true
+            });
+            */
         }
 
-        //Liste der files zuruecksetzen
+        //Ueber Dateien in aktuellem Verzeichnis gehen und mp3 sammeln
+        const files = await fs.readdir(data["playlist"]);
         data["files"] = [];
-
-        //Ueber Dateien in aktuellem Verzeichnis gehen
-        fs.readdirSync(data["playlist"]).forEach(file => {
-
-            //mp3 (audio) files sammeln
+        for (const file of files) {
             if ([".mp3"].includes(path.extname(file).toLowerCase())) {
                 //console.log("add file " + file);
                 data["files"].push(data["playlist"] + "/" + file);
             }
-        });
+        }
 
         //Playlist-Datei schreiben (1 Zeile pro item)
-        fs.writeFileSync(dirname + "/playlist.txt", data["files"].join("\n"));
+        await fs.writeFile(__dirname + "/playlist.txt", data["files"].join("\n"));
 
         //Playlist-Datei laden und starten
         player.exec("loadlist " + __dirname + "/playlist.txt");
@@ -565,7 +575,7 @@ function setPlaylist(reloadSession, readPlaylist) {
 
 //Infos der Session in File schreiben
 function writeSessionJson() {
-    fs.writeJsonSync(dirname + "/lastSession.json", {
+    fs.writeJSON(__dirname + "/lastSession.json", {
         path: data["playlist"],
         activeItem: data["activeItem"],
         activeItemName: data["activeItemName"],
@@ -583,7 +593,7 @@ function sendClientInfo(messageArr) {
             "type": message,
             "value": data[message]
         };
-        for (ws of wss.clients) {
+        for (const ws of wss.clients) {
             try {
                 ws.send(JSON.stringify(messageObj));
             }
@@ -594,6 +604,8 @@ function sendClientInfo(messageArr) {
 
 //JSON fuer Oberflaeche berechnen mit aktiven Foldern, Filtern,...
 function getMainJSON() {
+    var start = new Date().getTime();
+    console.log("get main json");
 
     //In Audiolist sind Infos ueber Modes und Filter
     const jsonDir = audioDir + "/wap/json";
@@ -609,7 +621,7 @@ function getMainJSON() {
         const inactiveFilters = [];
 
         //Ueber Filter des Modus gehen (bibi-tina, bobo,...)
-        modeData["filter"]["filters"].forEach((filterData, index) => {
+        for (const [index, filterData] of modeData["filter"]["filters"].entries()) {
 
             //filterID merken (bibi-tina, bobo)
             const filterID = filterData["id"];
@@ -617,7 +629,7 @@ function getMainJSON() {
             //All-Filter wird immer angezeigt -> "active" loeschen (wird nicht fuer die Oberflaeche benoetigt)
             if (filterID === "all") {
                 delete jsonObj[mode]["filter"]["filters"][index]["active"];
-                return;
+                continue;
             }
 
             //Wenn Modus aktiv ist
@@ -633,8 +645,6 @@ function getMainJSON() {
                     filterID: filterID,
                     mode: mode
                 };
-
-                //Titel merken eines Items
                 modeDataFileArr.push(modeData);
             }
 
@@ -642,7 +652,7 @@ function getMainJSON() {
             else {
                 inactiveFilters.push(filterData);
             }
-        });
+        }
 
         //Ueber inaktive Filter gehen und aus JSON-Obj loeschen
         inactiveFilters.forEach(filter => {
@@ -666,52 +676,55 @@ function getMainJSON() {
     });
 
     //Wert merken, damit er an Clients uebergeben werden kann
+    console.log("get main json done");
+    var end = new Date().getTime();
+    var time = end - start;
+    console.log('Execution time: ' + time);
     data["mainJSON"] = jsonObj;
 }
 
 //Aktuelle Dateien aus Herz-Mix-Ordner holen und an Clients schicken
-function getMixFiles() {
-    glob.promise(data["mixDir"] + "/*.mp3").then((files) => {
-        data["mixFiles"] = files.map(path => {
-            return {
-                "type": "old",
-                "path": path
-            }
-        });
-        sendClientInfo(["mixFiles"]);
+async function getMixFiles() {
+    console.log("get mix files");
+    const files = await glob.promise(data["mixDir"] + "/*.mp3");
+    data["mixFiles"] = files.map(path => {
+        return {
+            "type": "old",
+            "path": path
+        }
     });
-}
+    console.log("get mix files done");
+    sendClientInfo(["mixFiles"]);
+};
 
 //Dateien fuer Herz-Mix-Suche ermitteln
-function getSearchFiles() {
-    console.log("create mix files");
+async function getSearchFiles() {
+    console.log("get search files");
 
     //cds, kindermusik und shp komplett anbieten
-    glob.promise(audioDir + "/{wap/mp3/cds,wap/mp3/kindermusik,shp}/**/*.mp3", {
-    }).then((mp3Files) => {
+    const mp3Files = await glob.promise(audioDir + "/{wap/mp3/cds,wap/mp3/kindermusik,shp}/**/*.mp3");
 
-        //Erstellungsdatum fuer Sortierung ermitteln
-        const searchFiles = mp3Files.map(filePath => {
-            return {
-                "path": filePath,
-                "name": path.basename(filePath, '.mp3'),
-                "date": fs.statSync(filePath).birthtime
-            }
-        });
-
-        //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
-        console.log("create mix files done");
-        data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
-        sendClientInfo(["searchFiles"]);
+    //Erstellungsdatum fuer Sortierung ermitteln
+    const searchFiles = mp3Files.map(filePath => {
+        return {
+            "path": filePath,
+            "name": path.basename(filePath, '.mp3'),
+            "date": fs.statSync(filePath).birthtime
+        }
     });
+
+    //Dateien in Array nach Erstellungsdatum absteigend sortieren => neueste Dateien auf Server werden zuerst angeboten
+    console.log("get search files done");
+    data["searchFiles"] = _.sortBy(searchFiles, 'date').reverse();
+    sendClientInfo(["searchFiles"]);
 }
 
 //Lautstaerke setzen
 function setVolume() {
     if (configFile.audioOutput) {
-        const initialVolumeCommand = "amixer sset " + configFile.audioOutput + " " + data["volume"] + "% -M";
-        console.log(initialVolumeCommand);
-        exec(initialVolumeCommand);
+        const volumeCommand = "amixer sset " + configFile.audioOutput + " " + data["volume"] + "% -M";
+        console.log(volumeCommand);
+        exec(volumeCommand);
     }
     else {
         console.log("no audioOutput configured");
@@ -720,7 +733,7 @@ function setVolume() {
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
 function startCountdown(factor = 1) {
-    console.log("start countdown")
+    console.log("start countdown");
     data["countdownTime"] = countdownTime * factor;
     countdownID = setInterval(countdown, 1000);
 }
