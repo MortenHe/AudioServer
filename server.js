@@ -237,7 +237,7 @@ wss.on('connection', function connection(ws) {
                     //Wenn wir noch nicht beim letzten Titel sind, zum naechsten Titel springen
                     if (data["position"] < (data["files"].length - 1)) {
                         player.next();
-                        playSound("track-change.wav");
+                        playSound("track-next");
                     }
 
                     //wir sind beim letzten Titel
@@ -258,10 +258,10 @@ wss.on('connection', function connection(ws) {
                     if (data["position"] > 0) {
 
                         //Wenn weniger als x Sekunden vergangen sind -> zum vorherigen Titel springen
-                        if (data["secondsPlayed"] < 3) {
+                        if (data["secondsPlayed"] < 7) {
                             console.log("go to previous track");
                             player.previous();
-                            playSound("track-change.wav");
+                            playSound("track-prev");
                         }
 
                         //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
@@ -270,7 +270,7 @@ wss.on('connection', function connection(ws) {
                             console.log("repeat current track");
                             data["secondsPlayed"] = 0;
                             player.seekPercent(0);
-                            playSound("track-same.wav");
+                            playSound("track-same");
                         }
                     }
 
@@ -280,7 +280,7 @@ wss.on('connection', function connection(ws) {
                         //Playlist nochmal von vorne starten
                         console.log("first track from start");
                         player.seekPercent(0);
-                        playSound("track-same.wav");
+                        playSound("track-same");
 
                         //Wenn Titel pausiert war, wieder unpausen
                         if (data["paused"]) {
@@ -347,7 +347,7 @@ wss.on('connection', function connection(ws) {
 
             //Pause-Status toggeln
             case 'toggle-paused-restart': case 'toggle-paused':
-                playSound("pause.wav");
+                playSound("pause");
 
                 //Wenn wir gerade in der Playlist sind
                 if (data["position"] !== -1) {
@@ -755,8 +755,7 @@ function setMixDir() {
 
 //Einzelsound abspielen
 function playSound(sound) {
-    const playedSound = sound || "button.wav";
-    singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
+    singleSoundPlayer.play({ path: audioDir + "/sounds/" + sound + ".wav" });
 }
 
 //Pi herunterfahren
