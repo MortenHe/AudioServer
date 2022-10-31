@@ -3,7 +3,7 @@
     "userMode": "laila|luis|mh",
     "shpAudioMode": "kids|sh",
     "audioOutput": "Digital|HDMI|Master|Speaker|PCM",
-    "volume": 80,
+    "volume": 100,
     "countdownTime": 300,
     "port": 8080,
     "GPIOButtons": false,
